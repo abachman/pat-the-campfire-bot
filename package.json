@@ -1,0 +1,9 @@
+{
+  "name":"f53-campfire-bot",
+  "version":"0.0.1",
+  "dependencies": {
+    "underscore": "1.1.7",
+    "dom-js": "0.0.1",
+    "mongoose": "1.7.3"
+  }
+}
