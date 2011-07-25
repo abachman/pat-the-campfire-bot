@@ -47,7 +47,7 @@ that's a secret
 
 #### 4. install dependencies
 
-I think you cd into the project directory and type `npm install`. Not sure, but 
+I think you cd into the project directory and type `npm install .`. Not sure, but 
 I have them installed, so maybe that worked? YMMV. 
 
 To install mongo, all I did was `brew install mongo` and everything just worked.
@@ -60,6 +60,12 @@ You'll need ruby for this. Get it. I recommend [rvm](http://rvm.beginrescueend.c
 2. `gem install foreman`
 
 That's all.
+
+### heroku
+
+1. `git push heroku master`
+2. setup 30m ping on http://www.montastic.com/ to make sure the app doesn't get shut off. Heroku 
+automatically turns off any dynos that haven't had a request in the last hour.
 
 ## hacking
 
