@@ -88,7 +88,7 @@ track_message = (msg) ->
   increment user_date_id
 
 # enter the main room
-instance.room process.env.campfire_bot_room, ( room ) ->
+instance.room process.env.campfire_bot_room, (room) ->
 
   # the message emitter
   handle_message = (message) ->
