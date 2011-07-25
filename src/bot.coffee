@@ -125,13 +125,23 @@ instance.room process.env.campfire_bot_room, (room) ->
       channel.on 'ready', () ->
         plugins.notify msg, room
         
-     console.log "Joining #{room.name}"
+    console.log "Joining #{room.name}"
+
+    # ping to prevent connection loss
+    ping_room = () ->
+      room.ping -> 
+        console.log('heartbeat')
+      # every 8 minutes
+      setInterval ping_room, (60000 * 8)
+
+    ping_room()
 
   # leave the room on exit
   process.on 'SIGINT', ->
     room.leave ->
       console.log '\nGood Luck, Star Fox'
       process.exit()
+
 
 # heroku wants the app to bind to a port, so lets do that
 server = http.createServer ( req, res ) ->

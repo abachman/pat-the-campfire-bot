@@ -21,5 +21,5 @@ module.exports =
 
     _.each patterns, (pattern) ->
       if pattern.regex.test(msg.body)
-        console.log "posting helpspot link: #{ msg.body.matching(pattern.regex)[2] }"
+        console.log "posting helpspot link: #{ msg.body.match(pattern.regex)[2] }"
         room.speak pattern.template.replace('$', msg.body.match(pattern.regex)[2]), logger
