@@ -106,26 +106,33 @@ instance.room process.env.campfire_bot_room, (room) ->
 
     room.speak("hai guys, it's me, #{bot.name}!", logger) unless process.env.SILENT
 
-    room.listen ( msg ) ->
-      # ignore it if it's a system message or I said it 
-      return if msg.user_id is null or msg.user_id == parseInt(bot.id)
+    room_event_loop = -> 
+      room.listen ( msg ) ->
+        # ignore it if it's a system message or I said it 
+        return if msg.user_id is null or msg.user_id == parseInt(bot.id)
 
-      # stats
-      track_message msg
+        # stats
+        track_message msg
 
-      debuglog "MESSAGE RECEIVED!"
+        debuglog "\nMESSAGE RECEIVED!"
 
-      # after receving each message, load the relevant user before processing the message
-      channel = new EventEmitter()
+        # after receving each message, load the relevant user before processing the message
+        channel = new EventEmitter()
 
-      # f_o_c_u emits 'ready' signal on channel
-      find_or_create_user msg.user_id, channel
+        # f_o_c_u emits 'ready' signal on channel
+        find_or_create_user msg.user_id, channel
 
-      # forward message to plugins
-      channel.on 'ready', () ->
-        plugins.notify msg, room
+        # forward message to plugins
+        channel.on 'ready', () ->
+          plugins.notify msg, room
         
     console.log "Joining #{room.name}"
+    room_event_loop()
+
+    room.events.on 'listen:disconnect', () ->
+      # start listening again
+      console.log "lost connection to Campfire, reattaching"
+      room_event_loop()
 
     # ping to prevent connection loss
     ping_room = () ->
