@@ -20,8 +20,7 @@ Pat the bot is developed against:
   * underscore - 1.1.7
   * dom-js - 0.0.1
   * mongoose - 1.7.3
-  * (development)
-    * jasmine-node - 1.0.6
+  * jasmine-node - 1.0.6 (development)
 * Ruby
   * heroku - 2.3.6
   * foreman - 0.18.0
