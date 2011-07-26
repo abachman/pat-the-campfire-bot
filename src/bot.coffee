@@ -139,6 +139,7 @@ instance.room process.env.campfire_bot_room, (room) ->
 
     # clear before setting in case room.join is being called again
     if heartbeat
+      debuglog "clearing heartbeat timeout"
       clearTimeout heartbeat
 
     # ping to prevent connection loss
