@@ -1,7 +1,7 @@
 # Module Requirements
-http       = require 'http'
-{Campfire} = require './vendor/campfire' 
-{_}        = require 'underscore'
+http           = require 'http'
+{Campfire}     = require './vendor/campfire' 
+{_}            = require 'underscore'
 {EventEmitter} = require 'events'
 util = require 'util'
 
@@ -87,6 +87,9 @@ track_message = (msg) ->
   user_date_id = "#{ msg.user_id }-#{ date_id }"
   increment user_date_id
 
+# global heartbeat timeout id
+heartbeat = null
+
 # enter the main room
 instance.room process.env.campfire_bot_room, (room) ->
 
@@ -134,14 +137,17 @@ instance.room process.env.campfire_bot_room, (room) ->
       console.log "lost connection to Campfire, reattaching"
       room_event_loop()
 
+    # clear before setting in case room.join is being called again
+    if heartbeat
+      clearTimeout heartbeat
+
     # ping to prevent connection loss
     ping_room = () ->
       room.ping -> 
         console.log('heartbeat')
       # every 8 minutes
-      setInterval ping_room, (60000 * 8)
-
-    ping_room()
+      setTimeout ping_room, (60000 * 8)
+    heartbeat = ping_room()
 
   # leave the room on exit
   process.on 'SIGINT', ->
