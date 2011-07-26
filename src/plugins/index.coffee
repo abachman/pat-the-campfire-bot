@@ -4,7 +4,8 @@ util = require 'util'
 exports = []
 
 logger = (d) ->
-  console.log "#{d.message.created_at}: #{d.message.body}"
+  if d.message
+    console.log "#{d.message.created_at}: #{d.message.body}"
 
 class PluginNotifier
   constructor: (@plugins) ->
