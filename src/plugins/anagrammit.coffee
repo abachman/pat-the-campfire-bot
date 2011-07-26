@@ -16,6 +16,7 @@ module.exports =
       phrase = body.match(/"([^\"]+)"/)[1]
 
       console.log "getting anagrams of \"#{ phrase }\""
+      console.log "from #{anagrammit_host}:#{anagrammit_port}/token=#{anagrammit_token}"
 
       if phrase.length
         anagrammit_client = http.createClient anagrammit_port, anagrammit_host
@@ -23,13 +24,17 @@ module.exports =
           method  : 'GET'
           path    : "/generate?phrase=#{ qs.escape(phrase) }&token=#{ qs.escape(anagrammit_token) }"
         
-        request = anagrammit_client.request options.method, options.path
+        request = anagrammit_client.request options.method, options.path, host: anagrammit_host
         request.end()
         request.on 'response', (response) ->
           data = ''
           response.on 'data', (chunk) ->
+            console.log "chunk: #{ chunk }"
+
             data += chunk
           response.on 'end', () ->
+            console.log "results are ready! #{ data }"
+
             results = JSON.parse(data)
             if /success/i.test(results.status)
               room.speak "#{ results.results.length } results:"
