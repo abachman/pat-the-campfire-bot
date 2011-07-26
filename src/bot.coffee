@@ -163,6 +163,6 @@ server = http.createServer ( req, res ) ->
   res.writeHead 200, { 'Content-Type': 'text/plain' }
   res.end "#{ bot.name || 'bot' } <3s you\n"
 
-port = process.env.PORT || 3000
+port = process.env.PORT || 5000
 
 server.listen port, () -> console.log("listening on port #{ port }")

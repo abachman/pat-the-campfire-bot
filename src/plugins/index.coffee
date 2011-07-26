@@ -3,11 +3,14 @@ util = require 'util'
 
 exports = []
 
+logger = (d) ->
+  console.log "#{d.message.created_at}: #{d.message.body}"
+
 class PluginNotifier
   constructor: (@plugins) ->
   notify: (message, room) ->
     @plugins.forEach (plugin) ->
-      plugin.listen(message, room)
+      plugin.listen(message, room, logger)
 
 fs.readdirSync(__dirname).forEach (file) ->
   return if /^\./.test(file)
