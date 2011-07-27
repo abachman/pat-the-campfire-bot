@@ -27,6 +27,16 @@ phrases = [
     msg: "it's probably not nighttime where i am"  
   }
 ]
+phrases.push 
+  regex: /do not want/i
+  msg: [ 
+    "http://theducks.org/pictures/do-not-want-dog.jpg"
+    "http://img69.imageshack.us/img69/3626/gatito13bj0.gif"
+    "http://icanhascheezburger.files.wordpress.com/2007/03/captions03211.jpg?w=500&h=332"
+    "http://icanhascheezburger.files.wordpress.com/2007/04/do-not-want.jpg?w=500&h=430"
+    "http://wealsoran.com/music/uploaded_images/images_do_not_want-741689.jpg"
+  ]
+  choice: true
 
 api =
   logger: (d) ->
@@ -43,8 +53,12 @@ api =
       return unless phrase.regex.test(message.body)
 
       if _.isArray( phrase.msg )
-        phrase.msg.forEach (msg) ->
-          room.speak msg, api.logger
+        if phrase.choice
+          choose = Math.floor(Math.random() * phrase.msg.length)
+          room.speak phrase.msg[choose], api.logger
+        else
+          phrase.msg.forEach (msg) ->
+            room.speak msg, api.logger
       else if _.isFunction(phrase.msg)
         match = message.body.match(phrase.regex)[1]
 
