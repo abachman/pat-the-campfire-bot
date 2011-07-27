@@ -1,6 +1,6 @@
 #  mess around with your helpspot installation
 
-_ = require('underscore')
+{_} = require 'underscore'
 
 logger = ( d ) ->
   try
