@@ -2,7 +2,7 @@
 {User} = require '../store'
 
 phrases = [
-  { regex: /\bpat\?/, msg: "yeah, I'm here" }
+  { regex: /\bpat\?/i, msg: "yeah, I'm here" }
   { regex: /deal with it/,  msg: "http://s3.amazonaws.com/gif.ly/gifs/490/original.gif?1294726461" }
   { regex: /\bnoob\b/i, msg: 'http://www.marriedtothesea.com/022310/i-hate-thinking.gif' }
   { regex: /\bimo\b/i,  msg: [ "http://s3.amazonaws.com/gif.ly/gifs/485/original.gif?1294425077", "well, that's just, like, your opinion, man."] }
