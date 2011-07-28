@@ -1,32 +1,37 @@
-{_}    = require 'underscore'
-{User} = require '../store'
+{_} = require 'underscore'
+util = require 'util'
+{User, Phrase} = require '../store'
 
 phrases = [
   { regex: /\bpat\?/i, msg: "yeah, I'm here" }
-  { regex: /deal with it/,  msg: "http://s3.amazonaws.com/gif.ly/gifs/490/original.gif?1294726461" }
   { regex: /\bnoob\b/i, msg: 'http://www.marriedtothesea.com/022310/i-hate-thinking.gif' }
-  { regex: /\bimo\b/i,  msg: [ "http://s3.amazonaws.com/gif.ly/gifs/485/original.gif?1294425077", "well, that's just, like, your opinion, man."] }
-  { 
-    regex: /^(hi|hello|hey|yo )/i
-    precedent: /\bpat\b/i
-    msg: _.template("<%= match %> yourself, <%= user.name %>") 
-  }
-  { 
-    regex: /morning/i
-    precedent: /\bpat\b/i
-    msg: _.template("Good morning to you too, <%= user.name %>!") 
-  }
-  { 
-    regex: /afternoon/i
-    precedent: /\bpat\b/i
-    msg: "a pleasant afternoon to you, as well"  
-  }
-  { 
-    regex: /night/i
-    precedent: /\bpat\b/i
-    msg: "it's probably not nighttime where i am"  
-  }
+  { regex: /morning/i, precedent: /\bpat\b/i, msg: _.template("Good morning to you too, <%= user.name %>!") }
+  { regex: /night/i, precedent: /\bpat\b/i, msg: "it's probably not nighttime where i am" }
 ]
+
+# response with precedent
+phrases.push
+  regex: /afternoon/i
+  precedent: /\bpat\b/i
+  msg: "a pleasant afternoon to you, as well"
+
+# templated response. Template messages get `match` and `user` variables.
+phrases.push
+  precedent: /\bpat\b/i
+  regex: /^(hi|hello|hey|yo )/i
+  msg: _.template("<%= match %> yourself, <%= user.name %>")
+
+# single message response
+phrases.push
+  regex: /deal with it/i
+  msg: "http://s3.amazonaws.com/gif.ly/gifs/490/original.gif?1294726461"
+
+# multiple message response
+phrases.push
+  regex: /\bimo\b/i
+  msg: [ "http://s3.amazonaws.com/gif.ly/gifs/485/original.gif?1294425077", "well, that's just, like, your opinion, man."]
+
+# choose one response
 phrases.push 
   regex: /do not want/i
   msg: [ 
@@ -38,16 +43,105 @@ phrases.push
   ]
   choice: true
 
-api =
+class Phrases
+  constructor: (static_phrases) -> 
+    @static_phrases = static_phrases
+
+    @load_phrases()
+    
+    @re_matcher = /(\/[^/]+\/[a-z]{0,3})/i
+    @phrase_matcher = /"([^\"]*)"/i
+
+    # reuse the re_matcher
+    remove_matcher = @re_matcher.toString()
+    remove_matcher = remove_matcher.substr(1, remove_matcher.length - 3) # get rid of leading / and trailing /i
+    @remove_matcher = new RegExp("-" + remove_matcher)
+  
+  load_phrases: ->
+    @phrases = []
+
+    # first the static phrases
+    @static_phrases.forEach (phrase) =>
+      @phrases.push phrase
+
+    # learned responses. load on require
+    Phrase.find {}, (err, stored_phrases) =>
+      stored_phrases.forEach (phrase) =>
+        console.log "Loading from mongo: #{ util.inspect(phrase) }"
+        @phrases.push 
+          regex: new RegExp(phrase.pattern, phrase.modifiers)
+          msg: phrase.message
+      console.log "[Phrases] I know #{ @phrases.length } phrases: #{ @all_phrases() }"
+
   logger: (d) ->
     try
       console.log "#{d.message.created_at}: #{d.message.body}"
 
-  phrases: phrases
+  # return phrase identifiers
+  all_phrases: -> 
+    _.map(@phrases, (phrase) -> phrase.regex.toString()).join(', ')
 
-  listen: ( message, room ) ->
-    # loop through the static phrases
-    api.phrases.forEach (phrase) ->
+  tell_all: (room) ->
+    console.log "[Phrases] I know #{ @phrases.length } phrases: #{ @all_phrases() }"
+    room.speak "I know #{ @phrases.length } phrases: #{ @all_phrases() }", @logger
+
+  get_isolated_pattern: (pattern) ->
+    _leading  = /^\//
+    _trailing = /\/([a-z]{0,3})$/
+
+    mods = ""
+    mods = _trailing.exec(pattern)[1] if _trailing.test(pattern)
+
+    return {
+      body: pattern.replace(_leading, '').replace(_trailing, '')
+      modifiers: mods
+    }
+
+  add_phrase: (pattern, phrase, message, room) ->
+    # pattern is a string like "/all that/i"
+    #
+    {body, modifiers} = @get_isolated_pattern pattern
+
+    # do we already have this one?
+    Phrase.findOne {pattern: body, modifiers: modifiers}, (err, phrase) =>
+      unless phrase is null
+        room.speak "I already respond to /#{ body }/#{ modifiers }, sorry :(", @logger
+        return 
+
+      # add phrase to store
+      _phrase = new Phrase
+        pattern: body
+        modifiers: modifiers
+        user_id: message.user_id
+        message: phrase
+
+      _phrase.save (err, new_phrase) =>
+        User.findOne {user_id: message.user_id}, (err, user) =>
+          if err
+            # whatever
+            room.speak "From now on, if anyone says #{ body }, I'll say \"#{ phrase }\"", @logger
+          else
+            room.speak "Thanks, #{ user.name.split(' ')[0] }, from now on if someone says #{ body }, I'll say \"#{ phrase }\"", @logger
+
+          @load_phrases()
+
+  remove_phrase: (pattern, room) ->
+    {body, modifiers} = @get_isolated_pattern(pattern)
+    Phrase.findOne {pattern: body, modifiers: modifiers}, (err, phrase) =>
+      if err or phrase is null
+        room.speak "I couldn't find a phrase matching /#{ body }/#{ modifiers }"
+      else
+        phrase.remove (err, p) => 
+          room.speak "I've removed a phrase matching /#{ body }/#{ modifiers }"
+          @load_phrases()
+
+  match_phrase: (message, room) ->
+    # loop through the static phrases, find a matching reponse
+    if /pat/i.test(message.body) && /what.*know\??$/i.test(message.body)
+      @tell_all(room)
+      return
+
+    @phrases.forEach (phrase) =>
       if phrase.precedent
         return unless phrase.precedent.test(message.body)
       return unless phrase.regex.test(message.body)
@@ -55,23 +149,37 @@ api =
       if _.isArray( phrase.msg )
         if phrase.choice
           choose = Math.floor(Math.random() * phrase.msg.length)
-          room.speak phrase.msg[choose], api.logger
+          room.speak phrase.msg[choose], @logger
         else
-          phrase.msg.forEach (msg) ->
-            room.speak msg, api.logger
+          phrase.msg.forEach (msg) =>
+            room.speak msg, @logger
       else if _.isFunction(phrase.msg)
         match = message.body.match(phrase.regex)[1]
-
         # find the user who spoke and pass them along
-        User.findOne {user_id: message.user_id}, (err, user) ->
+        User.findOne {user_id: message.user_id}, (err, user) =>
           if user 
-            room.speak phrase.msg({match: match, user: user}), api.logger
+            room.speak phrase.msg({match: match, user: user}), @logger
           else
-            room.speak phrase.msg({match: match, user: {}}), api.logger
+            room.speak phrase.msg({match: match, user: {}}), @logger
       else
-        room.speak phrase.msg, api.logger
-
+        room.speak phrase.msg, @logger
       phrase.callback() if _.isFunction( phrase.callback )
 
-module.exports = api
+  listen: (message, room) ->
+    body = message.body
+
+    # adder
+    if /\bpat\b/i.test(body) 
+      if @re_matcher.test(body) && @phrase_matcher.test(body)
+        console.log "add a phrase"
+        @add_phrase @re_matcher.exec(body)[1], @phrase_matcher.exec(body)[1], message, room
+        return
+      else if @remove_matcher.test(body)
+        console.log "remove a phrase"
+        @remove_phrase @re_matcher.exec(body)[1], room
+        return
+      
+    @match_phrase(message, room)
+
+module.exports = new Phrases(phrases)
 

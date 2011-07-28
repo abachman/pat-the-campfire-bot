@@ -18,13 +18,15 @@ UserSchema = new Schema
   avatar_url: String
 User = mongoose.model "User", UserSchema
 
-QuoteSchema = new Schema
+PhraseSchema = new Schema
   user_id: String
-  text: String
+  message: String
+  pattern: String
+  modifiers: String
   created_at:
     type: Date
     default: () -> new Date
-Quote = mongoose.model "Quote", QuoteSchema
+Phrase = mongoose.model "Phrase", PhraseSchema
 
 CounterSchema = new Schema
   name:
@@ -38,7 +40,7 @@ events = new EventEmitter()
 
 module.exports =
   User: User
-  Quote: Quote
+  Phrase: Phrase
   Counter: Counter
 
   # communication
