@@ -93,24 +93,25 @@ class Phrases
     mods = _trailing.exec(pattern)[1] if _trailing.test(pattern)
 
     return {
-      body: pattern.replace(_leading, '').replace(_trailing, '')
+      pattern: pattern.replace(_leading, '').replace(_trailing, '')
       modifiers: mods
     }
 
-  add_phrase: (pattern, phrase, message, room) ->
-    # pattern is a string like "/all that/i"
-    #
-    {body, modifiers} = @get_isolated_pattern pattern
+  add_phrase: (regex, phrase, message, room) ->
+    # full_pattern is a string like "/all that/i"
+    {pattern, modifiers} = @get_isolated_pattern regex
+
+    console.log "I got: {phrase: \"#{ phrase }\", pattern: \"#{ pattern }\", modifiers: \"#{ modifiers }\"}"
 
     # do we already have this one?
-    Phrase.findOne {pattern: body, modifiers: modifiers}, (err, phrase) =>
-      unless phrase is null
-        room.speak "I already respond to /#{ body }/#{ modifiers }, sorry :(", @logger
+    Phrase.findOne {pattern: pattern, modifiers: modifiers}, (err, existing_phrase) =>
+      unless existing_phrase is null
+        room.speak "I already respond to /#{ pattern }/#{ modifiers }, sorry :(", @logger
         return 
 
       # add phrase to store
       _phrase = new Phrase
-        pattern: body
+        pattern: pattern
         modifiers: modifiers
         user_id: message.user_id
         message: phrase
@@ -119,20 +120,20 @@ class Phrases
         User.findOne {user_id: message.user_id}, (err, user) =>
           if err
             # whatever
-            room.speak "From now on, if anyone says #{ body }, I'll say \"#{ phrase }\"", @logger
+            room.speak "From now on, if anyone says #{ pattern }, I'll say \"#{ new_phrase.message }\"", @logger
           else
-            room.speak "Thanks, #{ user.name.split(' ')[0] }, from now on if someone says #{ body }, I'll say \"#{ phrase }\"", @logger
+            room.speak "Thanks, #{ user.name.split(' ')[0] }, from now on if someone says #{ pattern }, I'll say \"#{ new_phrase.message }\"", @logger
 
           @load_phrases()
 
-  remove_phrase: (pattern, room) ->
-    {body, modifiers} = @get_isolated_pattern(pattern)
-    Phrase.findOne {pattern: body, modifiers: modifiers}, (err, phrase) =>
+  remove_phrase: (regex, room) ->
+    {pattern, modifiers} = @get_isolated_pattern(regex)
+    Phrase.findOne {pattern: pattern, modifiers: modifiers}, (err, phrase) =>
       if err or phrase is null
-        room.speak "I couldn't find a phrase matching /#{ body }/#{ modifiers }"
+        room.speak "I couldn't find a phrase matching /#{ pattern }/#{ modifiers }"
       else
         phrase.remove (err, p) => 
-          room.speak "I've removed a phrase matching /#{ body }/#{ modifiers }"
+          room.speak "I've removed a phrase matching /#{ pattern }/#{ modifiers }"
           @load_phrases()
 
   match_phrase: (message, room) ->
@@ -144,7 +145,10 @@ class Phrases
     @phrases.forEach (phrase) =>
       if phrase.precedent
         return unless phrase.precedent.test(message.body)
+
       return unless phrase.regex.test(message.body)
+
+      console.log "matched #{ message.body } with #{ phrase.regex.toString() }"
 
       if _.isArray( phrase.msg )
         if phrase.choice
@@ -162,6 +166,7 @@ class Phrases
           else
             room.speak phrase.msg({match: match, user: {}}), @logger
       else
+        console.log "speaking the bare phrase: #{ phrase.msg }"
         room.speak phrase.msg, @logger
       phrase.callback() if _.isFunction( phrase.callback )
 
