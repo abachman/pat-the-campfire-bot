@@ -43,6 +43,6 @@ module.exports =
           results = JSON.parse(data)
           if /success/i.test(results.status)
             room.speak "#{ results.results.length } results:"
-            room.speak results.results.join(', \n'), logger
+            room.paste results.results.join(' \n'), logger
           else
             room.speak "there was a problem :( \"#{ results.message }\"", logger

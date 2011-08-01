@@ -90,7 +90,13 @@ class Helpspot
     @api.get_request request_id, (request) =>
       if request && request.xRequest == request_id
         link = @room_link_template.replace('$', request_id)
-        room.speak "#{ link } \n\nassigned to: #{ request.xPersonAssignedTo.split(' ')[0] },\nstatus: #{ request.xStatus },\nopened: #{ request.dtGMTOpened },\nclosed: #{ request.dtGMTClosed }", logger
+        out =  "#{ link } \n\n"
+        out += "assigned to: #{ request.xPersonAssignedTo.split(' ')[0] } \n"
+        out += "status:      #{ request.xStatus } \n"
+        out += "opened:      #{ request.dtGMTOpened } \n"
+        if request.dtGMTClosed && request.dtGMTClosed.length
+          out += "closed:      #{ request.dtGMTClosed } \n"
+        room.paste out, logger
       else
         room.speak "I couldn't find a ticket with id: #{ request_id }", logger
 
