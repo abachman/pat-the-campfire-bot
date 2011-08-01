@@ -68,9 +68,10 @@ class Phrases
     Phrase.find {}, (err, stored_phrases) =>
       stored_phrases.forEach (phrase) =>
         console.log "Loading from mongo: #{ util.inspect(phrase) }"
-        @phrases.push 
-          regex: new RegExp(phrase.pattern, phrase.modifiers)
-          msg: phrase.message
+        if phrase.pattern && phrase.pattern.length
+          @phrases.push 
+            regex: new RegExp(phrase.pattern, phrase.modifiers)
+            msg: phrase.message
       console.log "[Phrases] I know #{ @phrases.length } phrases: #{ @all_phrases() }"
 
   logger: (d) ->
