@@ -1,6 +1,6 @@
 # pull results from anagrammit web service
-http = require('http')
 util = require('util')
+curl = require('../vendor/simple_http').curl
 qs   = require('querystring')
 
 # if you're using anagrammit, make sure you add the same api token to both heroku envs
@@ -24,25 +24,17 @@ module.exports =
       console.log "getting anagrams of \"#{ phrase }\""
       console.log "from #{anagrammit_host}:#{anagrammit_port}/token=#{anagrammit_token}"
 
-      anagrammit_client = http.createClient anagrammit_port, anagrammit_host
       options =
-        method  : 'GET'
-        path    : "/generate?phrase=#{ qs.escape(phrase) }&token=#{ qs.escape(anagrammit_token) }"
+        host: anagrammit_host
+        port: anagrammit_port
+        path: "/generate?phrase=#{ qs.escape(phrase) }&token=#{ qs.escape(anagrammit_token) }"
 
-      request = anagrammit_client.request options.method, options.path, host: anagrammit_host
-      request.end()
-      request.on 'response', (response) ->
-        data = ''
-        response.on 'data', (chunk) ->
-          console.log "chunk: #{ chunk }"
+      curl options, (data) ->
+        console.log "results are ready! #{ data }"
 
-          data += chunk
-        response.on 'end', () ->
-          console.log "results are ready! #{ data }"
-
-          results = JSON.parse(data)
-          if /success/i.test(results.status)
-            room.speak "#{ results.results.length } results:"
-            room.paste results.results.join(' \n'), logger
-          else
-            room.speak "there was a problem :( \"#{ results.message }\"", logger
+        results = JSON.parse(data)
+        if /success/i.test(results.status)
+          room.speak "#{ results.results.length } results:"
+          room.paste results.results.join(' \n'), logger
+        else
+          room.speak "there was a problem :( \"#{ results.message }\"", logger
