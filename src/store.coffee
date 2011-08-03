@@ -23,6 +23,9 @@ PhraseSchema = new Schema
   message: String
   pattern: String
   modifiers: String
+  choice: 
+    type: Boolean
+    default: false
   created_at:
     type: Date
     default: () -> new Date

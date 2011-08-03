@@ -117,7 +117,7 @@ instance.room process.env.campfire_bot_room, (room) ->
         # stats
         track_message msg
 
-        debuglog "\nMESSAGE RECEIVED!"
+        debuglog "-----------------\nMESSAGE RECEIVED!"
 
         # after receving each message, load the relevant user before processing the message
         channel = new EventEmitter()

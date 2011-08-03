@@ -67,11 +67,17 @@ class Phrases
     # learned responses. load on require
     Phrase.find {}, (err, stored_phrases) =>
       stored_phrases.forEach (phrase) =>
-        console.log "Loading from mongo: #{ util.inspect(phrase) }"
+        # console.log "Loading from mongo: #{ util.inspect(phrase) }"
         if phrase.pattern && phrase.pattern.length
-          @phrases.push 
-            regex: new RegExp(phrase.pattern, phrase.modifiers)
-            msg: phrase.message
+          phr = regex:  new RegExp(phrase.pattern, phrase.modifiers)
+          if phrase.choice
+            # chooser
+            phr.choice = true
+            phr.msg    = JSON.parse(phrase.message)
+          else
+            # bare phrase
+            phr.msg = phrase.message
+          @phrases.push phr
       console.log "[Phrases] I know #{ @phrases.length } phrases: #{ @all_phrases() }"
 
   logger: (d) ->
@@ -98,6 +104,23 @@ class Phrases
       modifiers: mods
     }
 
+  save_phrase: (phrase_record, message, room) -> 
+    phrase_record.save (err, new_phrase) => 
+      User.findOne {user_id: message.user_id}, (err, user) =>
+        response = ""
+        if user
+          response = "Thanks #{ user.name.split(' ')[0] }!  "
+
+        response += "From now on, if anyone says #{ new_phrase.pattern }, "
+        if new_phrase.choice
+          phrases = JSON.parse new_phrase.message
+          response += "I'll choose from #{ phrases.length } responses"
+        else
+          response += "I'll say \"#{ new_phrase.message }\""
+
+        room.speak response, @logger
+        @load_phrases()
+
   add_phrase: (regex, phrase, message, room) ->
     # full_pattern is a string like "/all that/i"
     {pattern, modifiers} = @get_isolated_pattern regex
@@ -106,9 +129,20 @@ class Phrases
 
     # do we already have this one?
     Phrase.findOne {pattern: pattern, modifiers: modifiers}, (err, existing_phrase) =>
-      unless existing_phrase is null
+      if existing_phrase
+        if existing_phrase.choice 
+          # already a choce phrase
+          _phrases = JSON.parse(existing_phrase.message)
+          _phrases.push phrase
+          existing_phrase.message = JSON.stringify _phrases
+        else
+          existing_phrase.message = JSON.stringify [existing_phrase.message, phrase]
+          existing_phrase.choice  = true
+
+        @save_phrase existing_phrase, message, room
+
         # add new response to collection and set choice to true
-        room.speak "I already respond to /#{ pattern }/#{ modifiers }, sorry :(", @logger
+        # room.speak "I already respond to /#{ pattern }/#{ modifiers }, sorry :(", @logger
         return 
 
       # add phrase to store
@@ -118,15 +152,7 @@ class Phrases
         user_id: message.user_id
         message: phrase
 
-      _phrase.save (err, new_phrase) =>
-        User.findOne {user_id: message.user_id}, (err, user) =>
-          if err
-            # whatever
-            room.speak "From now on, if anyone says #{ pattern }, I'll say \"#{ new_phrase.message }\"", @logger
-          else
-            room.speak "Thanks, #{ user.name.split(' ')[0] }, from now on if someone says #{ pattern }, I'll say \"#{ new_phrase.message }\"", @logger
-
-          @load_phrases()
+      @save_phrase _phrase, message, room
 
   remove_phrase: (regex, room) ->
     {pattern, modifiers} = @get_isolated_pattern(regex)
