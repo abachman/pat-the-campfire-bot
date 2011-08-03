@@ -107,6 +107,7 @@ class Phrases
     # do we already have this one?
     Phrase.findOne {pattern: pattern, modifiers: modifiers}, (err, existing_phrase) =>
       unless existing_phrase is null
+        # add new response to collection and set choice to true
         room.speak "I already respond to /#{ pattern }/#{ modifiers }, sorry :(", @logger
         return 
 
