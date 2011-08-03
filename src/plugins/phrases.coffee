@@ -69,7 +69,11 @@ class Phrases
       stored_phrases.forEach (phrase) =>
         # console.log "Loading from mongo: #{ util.inspect(phrase) }"
         if phrase.pattern && phrase.pattern.length
-          phr = regex:  new RegExp(phrase.pattern, phrase.modifiers)
+          try
+            phr = regex:  new RegExp(phrase.pattern, phrase.modifiers)
+          catch e
+            console.log "Couldn't load invalid regex /#{ phrase.pattern }/#{phrase.modifiers}! #{ e.message }"
+            continue
           if phrase.choice
             # chooser
             phr.choice = true
@@ -124,6 +128,12 @@ class Phrases
   add_phrase: (regex, phrase, message, room) ->
     # full_pattern is a string like "/all that/i"
     {pattern, modifiers} = @get_isolated_pattern regex
+
+    try 
+      new RegExp(pattern, modifiers)
+    catch e
+      console.log "invalid regex detected: /#{pattern}/#{modifiers} : #{e.message}"
+      room.speak "That was a bad regex :(", @logger
 
     console.log "I got: {phrase: \"#{ phrase }\", pattern: \"#{ pattern }\", modifiers: \"#{ modifiers }\"}"
 
