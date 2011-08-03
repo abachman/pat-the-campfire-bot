@@ -73,7 +73,7 @@ class Phrases
             phr = regex:  new RegExp(phrase.pattern, phrase.modifiers)
           catch e
             console.log "Couldn't load invalid regex /#{ phrase.pattern }/#{phrase.modifiers}! #{ e.message }"
-            continue
+            return
           if phrase.choice
             # chooser
             phr.choice = true
