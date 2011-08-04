@@ -44,6 +44,8 @@ class Google
                 String.fromCharCode(m2)
               .replace /&(nbsp|amp|quot|lt|gt)/g, (m1, m2) ->
                 { 'nbsp': ' ', 'amp': '&', 'quot': '"', 'lt': '<', 'gt': '>' }[m2]
+            # try to coerce to ascii
+            x.titleNoFormatting = new Buffer(x.titleNoFormatting, 'ascii').toString('ascii')
             x
           callback.call(this, results)
 
@@ -96,33 +98,6 @@ class Google
           
           console.log "ready with results for #{ results.city }"
           callback(results)
-
-    #-----------------
-
-    # http.request
-    # exec "curl -e 'http:#gf3.ca/' 'http:#www.google.com/ig/api?weather=" + escape(query) + "'", function (err, stdout, stderr) {
-    #   console.log("I got: " + stdout)
-
-    #   results = {}
-
-    #   domjs.parse(stdout, function (err, dom) {
-    #     console.log(util.inspect(dom, false, 23))
-    #     console.log("serializes to : " + dom.toXml())
-    #   })
-
-    #   # $n = nquery.createHtmlDocument(stdout)
-    #   # results = {
-    #   #   city:      $n('forecast_information city').attr('data')
-    #   # , condition: $n('current_conditions condition').attr('data')
-    #   # , temp_f:    $n('current_conditions temp_f').attr('data')
-    #   # , temp_c:    $n('current_conditions temp_c').attr('data')
-    #   # , humidity:  $n('current_conditions humidity').attr('data')
-    #   # }
-
-    #   # console.log("results for " + results.city + " are available")
-
-    #   callback.call(this, results)
-    # })
 
 module.exports = Google
 
