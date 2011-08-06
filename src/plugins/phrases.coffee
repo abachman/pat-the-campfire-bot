@@ -55,7 +55,7 @@ class Phrases
     # reuse the re_matcher
     remove_matcher = @re_matcher.toString()
     remove_matcher = remove_matcher.substr(1, remove_matcher.length - 3) # get rid of leading / and trailing /i
-    @remove_matcher = new RegExp("-" + remove_matcher)
+    @remove_matcher = new RegExp("-\\s*#{remove_matcher}|forget\\s+#{remove_matcher}")
   
   load_phrases: ->
     @phrases = []
