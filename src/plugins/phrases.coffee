@@ -37,8 +37,8 @@ phrases.push
   msg: [ 
     "http://theducks.org/pictures/do-not-want-dog.jpg"
     "http://img69.imageshack.us/img69/3626/gatito13bj0.gif"
-    "http://icanhascheezburger.files.wordpress.com/2007/03/captions03211.jpg?w=500&h=332"
-    "http://icanhascheezburger.files.wordpress.com/2007/04/do-not-want.jpg?w=500&h=430"
+    "http://icanhascheezburger.files.wordpress.com/2007/03/captions03211.jpg"
+    "http://icanhascheezburger.files.wordpress.com/2007/04/do-not-want.jpg"
     "http://wealsoran.com/music/uploaded_images/images_do_not_want-741689.jpg"
   ]
   choice: true
