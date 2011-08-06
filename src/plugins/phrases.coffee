@@ -171,7 +171,7 @@ class Phrases
         room.speak "I couldn't find a phrase matching /#{ pattern }/#{ modifiers }"
       else
         phrase.remove (err, p) => 
-          room.speak "I've removed a phrase matching /#{ pattern }/#{ modifiers }"
+          room.speak "I've removed a phrase matching /#{ pattern }/#{ modifiers }, I am sincerely sorry I ever learned it in the first place :("
           @load_phrases()
 
   match_phrase: (message, room) ->
