@@ -93,8 +93,8 @@ class Phrases
     _.map(@phrases, (phrase) -> phrase.regex.toString()).join(', ')
 
   tell_all: (room) ->
-    console.log "[Phrases] I know #{ @phrases.length } phrases: #{ @all_phrases() }"
-    room.speak "I know #{ @phrases.length } phrases: #{ @all_phrases() }", @logger
+    room.speak "I know #{ @phrases.length } phrases: #{ @all_phrases() }.", @logger
+    room.speak "Say `pat /pattern/ \"phrase\"` to help me remember and `pat forget /pattern/` or `pat -/pattern/` to let me forget.", @logger
 
   get_isolated_pattern: (pattern) ->
     _leading  = /^\//
