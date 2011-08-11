@@ -47,6 +47,8 @@ campfire_stats = (message, room) ->
             room.speak message
 
 module.exports = 
+  name: "Stats"
+
   listen: (message, room) ->
     if /pat/i.test(message.body) and /stats/i.test(message.body)
       console.log 'stats request?'

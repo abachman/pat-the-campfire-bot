@@ -9,6 +9,7 @@ anagrammit_host = process.env.ANAGRAMMIT_HOST || 'localhost'
 anagrammit_port = process.env.ANAGRAMMIT_PORT || 3000
 
 module.exports =
+  name: "Anagrammit"
   listen: (message, room, logger) ->
     body = message.body
 

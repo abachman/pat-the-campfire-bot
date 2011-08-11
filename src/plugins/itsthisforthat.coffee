@@ -2,6 +2,7 @@ qs     = require 'querystring'
 {curl} = require '../vendor/simple_http'
 
 module.exports = 
+  name: "It's This For That"
   listen: (message, room, logger) ->
     body = message.body
 

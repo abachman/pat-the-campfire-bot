@@ -33,6 +33,8 @@ formatted_result = (result) ->
   buffer.toString().replace('–', '-')
 
 module.exports =
+  name: "Search"
+
   listen: ( msg, room, env ) ->
     g_exp   = /^!g\s+([^#@]+)?$/
     mdc_exp = /^!mdc ([^#@]+)(?:\s*#([1-9]))?$/

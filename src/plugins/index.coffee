@@ -21,6 +21,7 @@ fs.readdirSync(__dirname).forEach (file) ->
 
   # if it seems like a legit plugin, keep it
   if plugin.listen
+    console.log "loading plugin #{ plugin.name }"
     exports.push plugin
 
 console.log "loading #{exports.length} plugins from #{ __dirname }"

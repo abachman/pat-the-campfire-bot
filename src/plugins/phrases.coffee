@@ -44,6 +44,8 @@ phrases.push
   choice: true
 
 class Phrases
+  name: "Phrases"
+
   constructor: (static_phrases) -> 
     @static_phrases = static_phrases
 
@@ -92,6 +94,7 @@ class Phrases
   all_phrases: -> 
     _.map(@phrases, (phrase) -> phrase.regex.toString()).join(', ')
 
+  # "pat, what do you know?"
   tell_all: (room) ->
     room.speak "I know #{ @phrases.length } phrases: #{ @all_phrases() }.", @logger
     room.speak "Say `pat /pattern/ \"phrase\"` to help me remember and `pat forget /pattern/` or `pat -/pattern/` to let me forget.", @logger
@@ -178,7 +181,7 @@ class Phrases
     # loop through the static phrases, find a matching reponse
     if /pat/i.test(message.body) && /what.*know\??$/i.test(message.body)
       @tell_all(room)
-      return
+      return true
 
     @phrases.forEach (phrase) =>
       if phrase.precedent
@@ -216,11 +219,11 @@ class Phrases
       if @re_matcher.test(body) && @phrase_matcher.test(body)
         console.log "add a phrase"
         @add_phrase @re_matcher.exec(body)[1], @phrase_matcher.exec(body)[1], message, room
-        return
+        return true
       else if @remove_matcher.test(body)
         console.log "remove a phrase"
         @remove_phrase @re_matcher.exec(body)[1], room
-        return
+        return true
       
     @match_phrase(message, room)
 

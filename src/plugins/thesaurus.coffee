@@ -10,6 +10,8 @@ thesaurus_token = process.env.THESAURUS_API_TOKEN
 thesaurus_host  = 'words.bighugelabs.com'
 
 module.exports =
+  name: "Thesaurus" 
+
   listen: (message, room, logger) ->
     body = message.body
 

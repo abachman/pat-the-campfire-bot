@@ -96,6 +96,8 @@ class HelpspotAPI
 # link directly to a support request. Link template is an env variable with $
 # where the request ID should be.
 class Helpspot
+  name: "Helpspot"
+
   constructor: () ->
     @room_id_matcher = /(^|[^a-zA-Z0-9])(\d{5})($|[^a-zA-Z0-9])/ # try to avoid matching git hashes, etc
     @room_link_template = process.env.helpspot_link_template
