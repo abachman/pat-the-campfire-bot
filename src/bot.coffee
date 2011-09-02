@@ -160,7 +160,7 @@ instance.room process.env.campfire_bot_room, (room) ->
 
 # heroku wants the app to bind to a port, so lets do that
 server = http.createServer (req, res) ->
-  console.log "recieved request: #{ util.inspect(req) }"
+  console.log "recieved request #{ req.url }, #{ req.method }"
 
   unless plugins.http_notify(req, res)
     res.writeHead 200, { 'Content-Type': 'text/html' }
