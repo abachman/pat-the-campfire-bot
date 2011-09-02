@@ -7,6 +7,28 @@ adjectivenoun_port = 80
 
 module.exports =
   name: "Anagrammit"
+
+  # receive github post hook
+  http_listen: (request, response) ->
+    if /\/commit/i.test request.url
+      # get all data
+      commit = ""
+
+      request.on 'data', (data)->
+        commit += data
+
+      request.on 'end', ->
+        console.log "[github] recieved data:\n#{ commit }"
+
+        # json
+        # response.writeHead 200, {'Content-Type': 'application/json'}
+
+        # # output
+        # response.end JSON.stringify(data: commit, a: 1, b: 2, c: 3)
+
+
+      return true
+
   listen: (message, room, logger) ->
     body = message.body
 
