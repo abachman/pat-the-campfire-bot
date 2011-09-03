@@ -57,8 +57,8 @@ module.exports =
             campfire.room process.env.campfire_bot_room, (room) ->
               try 
                 qty = commit.commits.length
-                project = commit.repository.url
-                branch  = /\/[^\/]+$/.exec(commit.ref)[1]
+                project = commit.repository.name
+                branch  = /\/([^/]*)$/.exec(commit.ref)[1]
                 before  = commit.before
                 after   = commit.after
 
@@ -70,7 +70,7 @@ module.exports =
                 else if qty > 1
                   # a list of commits
                   compare_url = "#{ commit.repository.url }/compare/#{ before }...#{ after }"
-                  room.speak "[#{ project }] #{ commit.repository.owner.name } pushed #{qty} commits to #{ branch}: #{ compare_url }"
+                  room.speak "[#{ project }] #{ commit.repository.owner.name } pushed #{qty} commits to #{ branch }: #{ compare_url }"
                   commit.commits.forEach (c) ->
                     room.speak "[#{ project }/#{ branch }] #{ c.message } - #{ c.author.name }", 
                       logger
