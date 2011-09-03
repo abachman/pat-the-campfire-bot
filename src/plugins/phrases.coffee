@@ -18,18 +18,18 @@ phrases.push
 # templated response. Template messages get `match` and `user` variables.
 phrases.push
   precedent: /\bpat\b/i
-  regex: /^(hi|hello|hey|yo )/i
+  regex: /^(hi|hello|hey|yo)[, ]/i
   msg: _.template("<%= match %> yourself, <%= user.name %>")
 
 # single message response
 phrases.push
   regex: /deal with it/i
-  msg: "http://s3.amazonaws.com/gif.ly/gifs/490/original.gif?1294726461"
+  msg: "http://s3.amazonaws.com/gif.ly/gifs/490/original.gif"
 
 # multiple message response
 phrases.push
   regex: /\bimo\b/i
-  msg: [ "http://s3.amazonaws.com/gif.ly/gifs/485/original.gif?1294425077", "well, that's just, like, your opinion, man."]
+  msg: [ "http://s3.amazonaws.com/gif.ly/gifs/485/original.gif", "well, that's just, like, your opinion, man."]
 
 # choose one response
 phrases.push 
@@ -59,6 +59,7 @@ class Phrases
     remove_matcher = remove_matcher.substr(1, remove_matcher.length - 3) # get rid of leading / and trailing /i
     @remove_matcher = new RegExp("-\\s*#{remove_matcher}|forget\\s+#{remove_matcher}")
   
+  # only called once on app load
   load_phrases: ->
     @phrases = []
 
@@ -71,24 +72,79 @@ class Phrases
       stored_phrases.forEach (phrase) =>
         # console.log "Loading from mongo: #{ util.inspect(phrase) }"
         if phrase.pattern && phrase.pattern.length
+          # is a phrase, try to load it
+          phr = {}
           try
-            phr = regex:  new RegExp(phrase.pattern, phrase.modifiers)
+            phr.regex = new RegExp(phrase.pattern, phrase.modifiers)
           catch e
             console.log "Couldn't load invalid regex /#{ phrase.pattern }/#{phrase.modifiers}! #{ e.message }"
             return
+
           if phrase.choice
             # chooser
             phr.choice = true
+            # an array of messages
             phr.msg    = JSON.parse(phrase.message)
           else
             # bare phrase
             phr.msg = phrase.message
-          @phrases.push phr
+
+          @load_phrase_into_cache(phr)
+
       console.log "[Phrases] I know #{ @phrases.length } phrases: #{ @all_phrases() }"
 
   logger: (d) ->
     try
       console.log "#{d.message.created_at}: #{d.message.body}"
+
+  load_phrase_into_cache: (phr) ->
+    unless phr.regex
+      phr.regex = new RegExp(phr.pattern, phr.modifiers)
+
+    unless phr.msg
+      if phr.choice
+        phr.msg = JSON.parse(phr.message)
+      else
+        phr.msg = phr.message
+
+    _existing = _.find @phrases, (p) -> 
+      p.regex.toString() == phr.regex.toString()
+
+    if _existing?
+      console.log "#{ phr.regex } is not unique, adding to existing matcher"
+      # phrase is not unique, add the responses to the existing matcher
+      if _existing.choice || typeof(_existing.msg) == 'Array'
+        unless typeof(_existing.msg) is "Array"
+          _existing.msg = JSON.parse(_existing.msg)
+
+        console.log "Existing message is an Array"
+        if phr.choice || typeof(phr.msg) == 'Array'
+          # ensure array-ness
+          unless typeof(phr.msg) is "Array"
+            phr.msg = JSON.parse(phr.msg)
+
+          console.log "Loaded message is an Array"
+          _.each phr.msg, (m) -> _existing.msg.push(m)
+        else
+          console.log "Loaded message is a String: #{ phr.msg }"
+          _existing.msg.push phr.msg
+      else
+        console.log "Existing message is a String"
+        if phr.choice || typeof(phr.msg) == 'Array'
+          console.log "Loaded message is an Array"
+          phr.msg.push(_existing.msg)
+          _existing.msg = phr.msg
+        else
+          console.log "Loaded message is a String: #{ phr.msg }"
+          # now you have two messages
+          _existing.msg = [_existing.msg, phr.msg]
+      _existing.choice = true
+      console.log "Updated existing message: #{ util.inspect(_existing.msg) }"
+    else
+      @phrases.push phr
+
+  remove_phrase_from_cache: (phr) ->
+    @phrases = _.reject(@phrases, (p) -> p.regex.toString() == phr.regex.toString())
 
   # return phrase identifiers
   all_phrases: -> 
@@ -126,25 +182,29 @@ class Phrases
           response += "I'll say \"#{ new_phrase.message }\""
 
         room.speak response, @logger
-        @load_phrases()
+        @load_phrase_into_cache(new_phrase)
 
   add_phrase: (regex, phrase, message, room) ->
     # full_pattern is a string like "/all that/i"
     {pattern, modifiers} = @get_isolated_pattern regex
 
+    regex = null
     try 
-      new RegExp(pattern, modifiers)
+      regex = new RegExp(pattern, modifiers)
     catch e
       console.log "invalid regex detected: /#{pattern}/#{modifiers} : #{e.message}"
       room.speak "That was a bad regex :(", @logger
+      return
 
     console.log "I got: {phrase: \"#{ phrase }\", pattern: \"#{ pattern }\", modifiers: \"#{ modifiers }\"}"
 
     # do we already have this one?
     Phrase.findOne {pattern: pattern, modifiers: modifiers}, (err, existing_phrase) =>
       if existing_phrase
+        console.log "#{ regex } already exists in storage"
+
         if existing_phrase.choice 
-          # already a choce phrase
+          # already a choice phrase
           _phrases = JSON.parse(existing_phrase.message)
           _phrases.push phrase
           existing_phrase.message = JSON.stringify _phrases
@@ -154,8 +214,6 @@ class Phrases
 
         @save_phrase existing_phrase, message, room
 
-        # add new response to collection and set choice to true
-        # room.speak "I already respond to /#{ pattern }/#{ modifiers }, sorry :(", @logger
         return 
 
       # add phrase to store
@@ -175,7 +233,7 @@ class Phrases
       else
         phrase.remove (err, p) => 
           room.speak "I've removed a phrase matching /#{ pattern }/#{ modifiers }, I am sincerely sorry I ever learned it in the first place :("
-          @load_phrases()
+          @remove_phrase_from_cache(p)
 
   match_phrase: (message, room) ->
     # loop through the static phrases, find a matching reponse
