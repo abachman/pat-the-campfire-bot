@@ -1,5 +1,7 @@
 # Pat the Campfire Bot
 
+*last update: 2011-09-03*
+
 Is what it is, does what it says.
 
 node.js so that it runs on Heroku. What do you know about bacon strips?
