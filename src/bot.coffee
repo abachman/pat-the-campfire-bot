@@ -26,12 +26,12 @@ debuglog = (message) ->
 bot = {}
 
 # Campfire instance
-instance  = new Campfire
+campfire_instance  = new Campfire
   ssl: true
   token: process.env.campfire_bot_token
   account: process.env.campfire_bot_account
 
-instance.me (msg) -> 
+campfire_instance.me (msg) -> 
   bot = msg.user
 
 find_or_create_user = (user_id, channel) -> 
@@ -44,7 +44,7 @@ find_or_create_user = (user_id, channel) ->
       console.info "looking up user_id #{ user_id }" 
 
       # get user from campfire API
-      instance.user user_id, (response) ->
+      campfire_instance.user user_id, (response) ->
         user = response.user
 
         debuglog "from campfire, I got #{ util.inspect(user) }"
@@ -91,7 +91,7 @@ track_message = (msg) ->
 heartbeat = null
 
 # enter the main room
-instance.room process.env.campfire_bot_room, (room) ->
+campfire_instance.room process.env.campfire_bot_room, (room) ->
 
   # the message emitter
   handle_message = (message) ->
@@ -162,7 +162,7 @@ instance.room process.env.campfire_bot_room, (room) ->
 server = http.createServer (req, res) ->
   console.log "recieved request #{ req.url }, #{ req.method }"
 
-  unless plugins.http_notify(req, res)
+  unless plugins.http_notify(req, res, logger)
     res.writeHead 200, { 'Content-Type': 'text/html' }
 
     res.end "
