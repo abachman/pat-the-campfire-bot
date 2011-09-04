@@ -4,20 +4,15 @@ curl       = require('../vendor/simple_http').curl
 {_}        = require 'underscore'
 qs         = require('querystring')
 
-adjectivenoun_host = 'adjectivenoun.me'
-adjectivenoun_port = 80
-
 class AdjectiveNoun
-
   get: (phrase, callback) ->
     options =
-      host: adjectivenoun_host
-      port: adjectivenoun_port
+      host: 'adjectivenoun.me'
+      port: 80
       path: "/#{ phrase }.txt"
 
     curl options, (data) ->
       callback data.trim()
-
 
 module.exports =
   name: "Anagrammit"
@@ -27,9 +22,18 @@ module.exports =
     if /\/commit/i.test request.url
       if /get/i.test request.method
         # GET (test)
-        response.writeHead 200, {'Content-Type': 'text/html'}
-        response.end "<form action='/commit' method='post'><textarea rows='40' cols='80' id='payload' name='payload'></textarea><input type='submit' value='post' /></form>"
-        return true
+        if process.env.node_env isnt 'production'
+          response.writeHead 200, {'Content-Type': 'text/html'}
+          response.end "
+            <form action='/commit' method='post'>
+              <textarea rows='40' cols='80' id='payload' name='payload'></textarea>
+              <br />
+              <input type='submit' value='post' />
+            </form>
+          "
+          return true
+        else
+          return false
 
       # POST
       # get all data
