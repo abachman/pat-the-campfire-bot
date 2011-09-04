@@ -115,12 +115,23 @@ class Phrases
       # phrase is not unique, add the responses to the existing matcher
       if _existing.choice || typeof(_existing.msg) == 'Array'
         unless typeof(_existing.msg) is "Array"
-          _existing.msg = JSON.parse(_existing.msg)
+          # existing is choice, but hasn't yet been converted into array. how is this possible?
+          try 
+            _existing.msg = JSON.parse(_existing.msg)
+          catch ex
+            console.log "error in parsing _existing.msg: #{ ex.message }"
+            _existing.msg = [_existing.msg]
 
-        console.log "Existing message is an Array"
+        console.log "_existing is an Array: #{util.inspect _existing.msg}"
+
         if phr.choice || typeof(phr.msg) == 'Array'
           # ensure array-ness
           unless typeof(phr.msg) is "Array"
+            try 
+              phr.msg = JSON.parse(phr.msg)
+            catch ex
+              console.log "error in parsing phr.msg: #{ ex.message }"
+              phr.msg = [phr.msg]
             phr.msg = JSON.parse(phr.msg)
 
           console.log "Loaded message is an Array"
