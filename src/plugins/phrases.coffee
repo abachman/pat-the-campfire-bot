@@ -32,9 +32,9 @@ phrases.push
   msg: [ "http://s3.amazonaws.com/gif.ly/gifs/485/original.gif", "well, that's just, like, your opinion, man."]
 
 # choose one response
-phrases.push 
+phrases.push
   regex: /do not want/i
-  msg: [ 
+  msg: [
     "http://theducks.org/pictures/do-not-want-dog.jpg"
     "http://img69.imageshack.us/img69/3626/gatito13bj0.gif"
     "http://icanhascheezburger.files.wordpress.com/2007/03/captions03211.jpg"
@@ -46,11 +46,11 @@ phrases.push
 class Phrases
   name: "Phrases"
 
-  constructor: (static_phrases) -> 
+  constructor: (static_phrases) ->
     @static_phrases = static_phrases
 
     @load_phrases()
-    
+
     @re_matcher = /(\/[^/]+\/[a-z]{0,3})/i
     @phrase_matcher = /"([^\"]*)"/i
 
@@ -58,7 +58,7 @@ class Phrases
     remove_matcher = @re_matcher.toString()
     remove_matcher = remove_matcher.substr(1, remove_matcher.length - 3) # get rid of leading / and trailing /i
     @remove_matcher = new RegExp("-\\s*#{remove_matcher}|forget\\s+#{remove_matcher}")
-  
+
   # only called once on app load
   load_phrases: ->
     @phrases = []
@@ -107,7 +107,7 @@ class Phrases
       else
         phr.msg = phr.message
 
-    _existing = _.find @phrases, (p) -> 
+    _existing = _.find @phrases, (p) ->
       p.regex.toString() == phr.regex.toString()
 
     if _existing?
@@ -144,10 +144,17 @@ class Phrases
       @phrases.push phr
 
   remove_phrase_from_cache: (phr) ->
-    @phrases = _.reject(@phrases, (p) -> p.regex.toString() == phr.regex.toString())
+    _before = @phrases.length
+    @phrases = _.reject @phrases, (p) -> 
+      p.regex.toString() == phr.regex.toString()
+    _after = @phrases.length
+
+    # return number of phrases removed
+    console.log "[remove_phrase_from_cache] removed #{ _before - _after } phrases from local cache"
+    _before - _after
 
   # return phrase identifiers
-  all_phrases: -> 
+  all_phrases: ->
     _.map(@phrases, (phrase) -> phrase.regex.toString()).join(', ')
 
   # "pat, what do you know?"
@@ -167,8 +174,8 @@ class Phrases
       modifiers: mods
     }
 
-  save_phrase: (phrase_record, message, room) -> 
-    phrase_record.save (err, new_phrase) => 
+  save_phrase: (phrase_record, message, room) ->
+    phrase_record.save (err, new_phrase) =>
       User.findOne {user_id: message.user_id}, (err, user) =>
         response = ""
         if user
@@ -189,7 +196,7 @@ class Phrases
     {pattern, modifiers} = @get_isolated_pattern regex
 
     regex = null
-    try 
+    try
       regex = new RegExp(pattern, modifiers)
     catch e
       console.log "invalid regex detected: /#{pattern}/#{modifiers} : #{e.message}"
@@ -203,7 +210,7 @@ class Phrases
       if existing_phrase
         console.log "#{ regex } already exists in storage"
 
-        if existing_phrase.choice 
+        if existing_phrase.choice
           # already a choice phrase
           _phrases = JSON.parse(existing_phrase.message)
           _phrases.push phrase
@@ -214,7 +221,7 @@ class Phrases
 
         @save_phrase existing_phrase, message, room
 
-        return 
+        return
 
       # add phrase to store
       _phrase = new Phrase
@@ -227,13 +234,20 @@ class Phrases
 
   remove_phrase: (regex, room) ->
     {pattern, modifiers} = @get_isolated_pattern(regex)
+
+    _removed = @remove_phrase_from_cache(regex: new RegExp(pattern, modifiers))
+
+    # clear from cache and storage
     Phrase.findOne {pattern: pattern, modifiers: modifiers}, (err, phrase) =>
       if err or phrase is null
-        room.speak "I couldn't find a phrase matching /#{ pattern }/#{ modifiers }"
+        if _removed > 0
+          room.speak "I couldn't find a phrase matching /#{ pattern }/#{ modifiers } in storage, "+
+            "but removed #{ _removed } from my local cache. The pattern may have a hard lock in my source code, it itches."
+        else
+          room.speak "I couldn't find a phrase matching /#{ pattern }/#{ modifiers } in storage or in the local cache"
       else
-        phrase.remove (err, p) => 
-          room.speak "I've removed a phrase matching /#{ pattern }/#{ modifiers }, I am sincerely sorry I ever learned it in the first place :("
-          @remove_phrase_from_cache(p)
+        phrase.remove (err, p) =>
+          room.speak "I've removed a phrase matching /#{ pattern }/#{ modifiers } from storage and #{ _removed } matching that from the local cache. I am sincerely sorry I ever learned it in the first place :("
 
   match_phrase: (message, room) ->
     # loop through the static phrases, find a matching reponse
@@ -260,7 +274,7 @@ class Phrases
         match = message.body.match(phrase.regex)[1]
         # find the user who spoke and pass them along
         User.findOne {user_id: message.user_id}, (err, user) =>
-          if user 
+          if user
             room.speak phrase.msg({match: match, user: user}), @logger
           else
             room.speak phrase.msg({match: match, user: {}}), @logger
@@ -273,7 +287,7 @@ class Phrases
     body = message.body
 
     # adder
-    if /\bpat\b/i.test(body) 
+    if /\bpat\b/i.test(body)
       if @re_matcher.test(body) && @phrase_matcher.test(body)
         console.log "add a phrase"
         @add_phrase @re_matcher.exec(body)[1], @phrase_matcher.exec(body)[1], message, room
@@ -282,7 +296,7 @@ class Phrases
         console.log "remove a phrase"
         @remove_phrase @re_matcher.exec(body)[1], room
         return true
-      
+
     @match_phrase(message, room)
 
 module.exports = new Phrases(phrases)
