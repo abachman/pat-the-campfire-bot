@@ -156,18 +156,14 @@ campfire_instance.room process.env.campfire_bot_room, (room) ->
       console.log '\nGood Luck, Star Fox'
       process.exit()
 
-# web listeners. simple.
-
-# heroku wants the app to bind to a port, so lets do that
+# heroku wants the app to bind to a port, so let's do that. We also might as
+# well listen to http requests.
 server = http.createServer (req, res) ->
   console.log "recieved request #{ req.url }, #{ req.method }"
 
-  unless plugins.http_notify(req, res, logger)
+  unless plugins.http_notify(req, res)
     res.writeHead 200, { 'Content-Type': 'text/html' }
-
-    res.end "
-    <pre>#{ bot.name || 'bot' } &lt;3s you</pre>
-    "
+    res.end "<pre>#{ bot.name || 'bot' } &lt;3s you</pre>"
 
 port = process.env.PORT || 5000
 
