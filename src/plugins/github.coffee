@@ -103,25 +103,28 @@ module.exports =
               account: process.env.campfire_bot_account
             campfire.room process.env.campfire_bot_room, (room) ->
               try 
+                hash_token = /^(.{7})/
                 qty = commit.commits.length
                 project = commit.repository.name
                 branch  = /\/([^/]*)$/.exec(commit.ref)[1]
                 before  = commit.before
+                before_token = hash_token.exec(before)[1]
                 after   = commit.after
+                after_token = hash_token.exec(after)[1]
 
                 if qty == 1
                   # a single commit
                   c = commit.commits[0]
-                  room.speak "[#{ project }/#{ branch }] #{ c.message } - #{ c.author.name } \n\n\"#{release_name}\"", 
+                  room.speak "[#{ project }/#{ branch }] #{ c.message } - #{ c.author.name } \n\ncurrent release: \"#{release_name}\"", 
                     logger
                 else if qty > 1
                   # a list of commits
-                  compare_url = "#{ commit.repository.url }/compare/#{ before }...#{ after }"
+                  compare_url = "#{ commit.repository.url }/compare/#{ before_token }...#{ after_token }"
                   room.speak "[#{ project }] #{ commit.repository.owner.name } pushed #{qty} commits to #{ branch }: #{ compare_url }"
                   commit.commits.forEach (c) ->
                     room.speak "[#{ project }/#{ branch }] #{ c.message } - #{ c.author.name }", 
                       logger
-                  room.speak "[#{project}/#{ branch }] \"#{release_name}\""
+                  room.speak "[#{project}/#{ branch }] current release: \"#{release_name}\""
 
               catch ex
                 console.log "error trying to post github commit: #{ ex.message }"
