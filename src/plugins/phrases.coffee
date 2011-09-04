@@ -113,7 +113,7 @@ class Phrases
     if _existing?
       console.log "#{ phr.regex } is not unique, adding to existing matcher"
       # phrase is not unique, add the responses to the existing matcher
-      if _existing.choice || typeof(_existing.msg) == 'Array'
+      if _existing.choice
         unless typeof(_existing.msg) is "Array"
           # existing is choice, but hasn't yet been converted into array. how is this possible?
           try 
