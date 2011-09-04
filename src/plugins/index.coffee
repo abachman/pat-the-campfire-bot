@@ -1,3 +1,8 @@
+# Autoload all plugins in the current directory. Anything that exports a
+# "listen" method is assumed to be a Campfire plugin, anything that exports an
+# "http_listen" method is assumed to be an http request handler. The same
+# plugin can provide both kinds of response capability.
+
 fs = require 'fs'
 util = require 'util'
 {_} = require 'underscore'
@@ -12,13 +17,12 @@ logger = (d) ->
 class PluginNotifier
   constructor: (@plugins, @services) ->
   http_notify: (request, response) ->
-    # only one response
-    _.any(
-      _.map(@services, (service) -> service.http_listen(request, response))
-    )
+    for service in @services
+      # break if something responds
+      return true if service.http_listen(request, response, logger)
 
   notify: (message, room) ->
-    @plugins.forEach (plugin) ->
+    for plugin in @plugins
       plugin.listen(message, room, logger)
 
 fs.readdirSync(__dirname).forEach (file) ->
@@ -33,7 +37,7 @@ fs.readdirSync(__dirname).forEach (file) ->
     chat_responders.push plugin
 
   if plugin.http_listen
-    console.log "loading plugin #{ plugin.name }"
+    console.log "loading service #{ plugin.name }"
     web_responders.push plugin
 
 console.log "loading #{chat_responders.length} chat plugins and #{web_responders.length} http plugins from #{ __dirname }"
