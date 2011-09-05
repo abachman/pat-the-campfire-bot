@@ -114,7 +114,7 @@ class Phrases
       console.log "#{ phr.regex } is not unique, adding to existing matcher"
       # phrase is not unique, add the responses to the existing matcher
       if _existing.choice
-        unless typeof(_existing.msg) is "Array"
+        unless _existing.msg.forEach
           # existing is choice, but hasn't yet been converted into array. how is this possible?
           try 
             _existing.msg = JSON.parse(_existing.msg)
