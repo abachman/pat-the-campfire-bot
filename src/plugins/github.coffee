@@ -112,10 +112,13 @@ module.exports =
                 after   = commit.after
                 after_token = hash_token.exec(after)[1]
 
+                link_to_commit = (hash) ->
+                  commit.repository.url + "/commit/#{ hash }"
+
                 if qty == 1
                   # a single commit
                   c = commit.commits[0]
-                  room.speak "[#{ project }/#{ branch }] #{ c.message } - #{ c.author.name } \n\ncurrent release: \"#{release_name}\"", 
+                  room.speak "[#{ project }/#{ branch }] #{ c.message } - #{ c.author.name } (#{ link_to_commit(after) }) \n\ncurrent release: \"#{release_name}\"", 
                     logger
                 else if qty > 1
                   # a list of commits
