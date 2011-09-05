@@ -95,7 +95,19 @@ module.exports =
         try
           commit = JSON.parse( qs.parse(commit).payload )
 
-          (new AdjectiveNoun).get commit.after, (release_name) ->
+          hash_token = /^(.{7})/
+          before  = commit.before
+          before_token = hash_token.exec(before)[1]
+          after   = commit.after
+          after_token = hash_token.exec(after)[1]
+          qty = commit.commits.length
+          project = commit.repository.name
+          branch  = /\/([^/]*)$/.exec(commit.ref)[1]
+
+          link_to_commit = (hash) ->
+            commit.repository.url + "/commit/#{ hash }"
+
+          (new AdjectiveNoun).get after_token, (release_name) ->
             # connect to github reporting room
             campfire  = new Campfire
               ssl: true
@@ -103,22 +115,10 @@ module.exports =
               account: process.env.campfire_bot_account
             campfire.room process.env.campfire_bot_room, (room) ->
               try 
-                hash_token = /^(.{7})/
-                qty = commit.commits.length
-                project = commit.repository.name
-                branch  = /\/([^/]*)$/.exec(commit.ref)[1]
-                before  = commit.before
-                before_token = hash_token.exec(before)[1]
-                after   = commit.after
-                after_token = hash_token.exec(after)[1]
-
-                link_to_commit = (hash) ->
-                  commit.repository.url + "/commit/#{ hash }"
-
                 if qty == 1
                   # a single commit
                   c = commit.commits[0]
-                  room.speak "[#{ project }/#{ branch }] #{ c.message } - #{ c.author.name } (#{ link_to_commit(after) }) \n\ncurrent release: \"#{release_name}\"", 
+                  room.speak "[#{ project }/#{ branch }] #{ c.message } - #{ c.author.name } (#{ link_to_commit(after) }) \n\ncurrent release #{ after_token }: \"#{release_name}\"", 
                     logger
                 else if qty > 1
                   # a list of commits
@@ -127,7 +127,7 @@ module.exports =
                   commit.commits.forEach (c) ->
                     room.speak "[#{ project }/#{ branch }] #{ c.message } - #{ c.author.name }", 
                       logger
-                  room.speak "[#{project}/#{ branch }] current release: \"#{release_name}\""
+                  room.speak "[#{project}/#{ branch }] current release #{ after_token }: \"#{release_name}\""
 
               catch ex
                 console.log "error trying to post github commit: #{ ex.message }"
