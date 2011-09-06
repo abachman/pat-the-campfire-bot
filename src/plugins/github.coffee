@@ -6,6 +6,11 @@ qs         = require('querystring')
 
 # JSON message from github's post-url service
 # {
+#   "pusher": {
+#     "email": "something@some.com",
+#     "name": "defunkt"
+#   },
+#   "compare": "http://github.com/own/proj/compare/123...432",
 #   "before": "5aef35982fb2d34e9d9d4502f6ede1072793222d",
 #   "repository": {
 #     "url": "http://github.com/defunkt/github",
@@ -86,17 +91,18 @@ module.exports =
        data += incoming
 
       request.on 'end', ->
-        commit = qs.parse(data).payload
-        console.log "[github] recieved data: #{ commit }"
+        payload = qs.parse(data).payload
+        console.log "[github] recieved data (#{typeof payload}): #{ payload }"
 
         # output
         response.writeHead 200, {'Content-Type': 'text/plain'}
 
         commit = null
         try
-          commit = JSON.parse( qs.parse(commit).payload )
+          commit = JSON.parse payload
         catch e
           console.log "[github] error parsing commit data, bailing. :("
+          console.log "[github] #{ e.message }"
           return false
 
         try
