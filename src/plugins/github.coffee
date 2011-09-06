@@ -80,14 +80,14 @@ module.exports =
 
       # POST
       # get all data
-      commit = []
+      data = ""
 
-      request.on 'data', (data)->
-        commit.push data
+      request.on 'data', (incoming) ->
+       data += incoming
 
       request.on 'end', ->
-        commit = commit.join()
-        console.log "[github] recieved data:\n#{ qs.parse(commit).payload }"
+        commit = qs.parse(data).payload
+        console.log "[github] recieved data: #{ commit }"
 
         # output
         response.writeHead 200, {'Content-Type': 'text/plain'}
