@@ -92,9 +92,14 @@ module.exports =
         # output
         response.writeHead 200, {'Content-Type': 'text/plain'}
 
+        commit = null
         try
           commit = JSON.parse( qs.parse(commit).payload )
+        catch e
+          console.log "[github] error parsing commit data, bailing. :("
+          return false
 
+        try
           hash_token = /^(.{7})/
           before  = commit.before
           before_token = hash_token.exec(before)[1]
@@ -106,6 +111,8 @@ module.exports =
 
           link_to_commit = (hash) ->
             commit.repository.url + "/commit/#{ hash }"
+
+          console.log "[github] parsed commit #{ commit.repository.url }/commit/#{after_token}"
 
           (new AdjectiveNoun).get after_token, (release_name) ->
             # connect to github reporting room
@@ -122,8 +129,8 @@ module.exports =
                     logger
                 else if qty > 1
                   # a list of commits
-                  compare_url = "#{ commit.repository.url }/compare/#{ before_token }...#{ after_token }"
-                  room.speak "[#{ project }] #{ commit.repository.owner.name } pushed #{qty} commits to #{ branch }: #{ compare_url }"
+                  compare_url = commit.compare # "#{ commit.repository.url }/compare/#{ before_token }...#{ after_token }"
+                  room.speak "[#{ project }] #{ commit.pusher.name } pushed #{qty} commits to #{ branch }: #{ compare_url }"
                   commit.commits.forEach (c) ->
                     room.speak "[#{ project }/#{ branch }] #{ c.message } - #{ c.author.name }", 
                       logger
