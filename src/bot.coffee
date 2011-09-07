@@ -134,7 +134,7 @@ campfire_instance.room process.env.campfire_bot_room, (room) ->
 
     room.events.on 'listen:disconnect', () ->
       # start listening again
-      console.log "lost connection to Campfire, reattaching"
+      console.log "lost connection to Campfire, rejoining #{ room.name }"
       room_event_loop()
 
     # clear before setting in case room.join is being called again
