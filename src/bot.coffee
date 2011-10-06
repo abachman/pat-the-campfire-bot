@@ -1,6 +1,6 @@
 # Module Requirements
 http           = require 'http'
-{Campfire}     = require './vendor/campfire' 
+{Campfire}     = require './vendor/campfire'
 {_}            = require 'underscore'
 {EventEmitter} = require 'events'
 util = require 'util'
@@ -31,17 +31,17 @@ campfire_instance  = new Campfire
   token: process.env.campfire_bot_token
   account: process.env.campfire_bot_account
 
-campfire_instance.me (msg) -> 
+campfire_instance.me (msg) ->
   bot = msg.user
 
-find_or_create_user = (user_id, channel) -> 
+find_or_create_user = (user_id, channel) ->
   User.findOne {user_id: user_id}, (err, result) ->
     if result?
       debuglog 'user recognized'
       channel.emit 'ready'
     else
       debuglog 'user unrecognized'
-      console.info "looking up user_id #{ user_id }" 
+      console.info "looking up user_id #{ user_id }"
 
       # get user from campfire API
       campfire_instance.user user_id, (response) ->
@@ -57,7 +57,7 @@ find_or_create_user = (user_id, channel) ->
           avatar_url: user.avatar_url
           created_at: user.created_at
 
-        user.save (err, record) -> 
+        user.save (err, record) ->
           if err
             console.error "ERROR: #{ err.message }"
             throw err
@@ -69,7 +69,7 @@ increment = (name) ->
   Counter.findOne {name: name}, (err, counter) ->
     if counter?
       counter.value = counter.value + 1
-      counter.save () -> # console.log "counted #{ name }" 
+      counter.save () -> # console.log "counted #{ name }"
     else
       counter = new Counter
         name: name
@@ -101,17 +101,17 @@ campfire_instance.room process.env.campfire_bot_room, (room) ->
     console.info "bot with id #{ bot.id } is joining #{room.name}"
 
     # who do I know?
-    User.find {}, (err, users) -> 
+    User.find {}, (err, users) ->
       if users.length
-        console.info "I know: #{ _.map(users, (u) -> u.name).join(', ') }" 
+        console.info "I know: #{ _.map(users, (u) -> u.name).join(', ') }"
       else
         debuglog "I don't know anyone yet."
 
     room.speak("hai guys, it's me, #{bot.name}!", logger) unless process.env.SILENT
 
-    room_event_loop = -> 
+    room_event_loop = ->
       room.listen ( msg ) ->
-        # ignore it if it's a system message or I said it 
+        # ignore it if it's a system message or I said it
         return if msg.user_id is null or msg.user_id == parseInt(bot.id)
 
         # stats
@@ -128,14 +128,15 @@ campfire_instance.room process.env.campfire_bot_room, (room) ->
         # forward message to plugins
         channel.on 'ready', () ->
           plugins.notify msg, room
-        
+
     console.log "Joining #{room.name}"
     room_event_loop()
 
     room.events.on 'listen:disconnect', () ->
       # start listening again
-      console.log "lost connection to Campfire, rejoining #{ room.name }"
-      room_event_loop()
+      console.log "lost connection to Campfire, killing process"
+      process.exit(1)
+      # room_event_loop()
 
     # clear before setting in case room.join is being called again
     if heartbeat
@@ -144,7 +145,7 @@ campfire_instance.room process.env.campfire_bot_room, (room) ->
 
     # ping to prevent connection loss
     ping_room = () ->
-      room.ping -> 
+      room.ping ->
         console.log('heartbeat')
       # every 8 minutes
       setTimeout ping_room, (60000 * 8)
