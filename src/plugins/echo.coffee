@@ -1,7 +1,9 @@
+util      = require('util')
 SpeakOnce = require('../vendor/speak_once').SpeakOnce
 qs        = require('querystring')
 
 echo_matcher = /^!echo\b(.*)/i
+spoken_messages = {}
 
 module.exports =
   name: "echo"
@@ -17,13 +19,24 @@ module.exports =
          data += incoming
 
         request.on 'end', ->
-          message = qs.parse(data).message
-          console.log "[echo] recieved data (#{typeof message}): #{ message }"
+          console.log "[echo] recieved POST #{ data }"
+          full_data = qs.parse(data)
+          message = full_data.message
+          console.log "[echo] recieved data (#{typeof full_data}): #{ util.inspect(full_data) }"
+          console.log "[echo] recieved message (#{typeof message}): #{ message }"
 
           # output
           response.writeHead 200, {'Content-Type': 'text/plain'}
 
-          new SpeakOnce (room) -> room.speak(message)
+          date = new Date
+
+          # only allow reposting after 30 seconds
+          if spoken_messages[message] and date - spoken_messages[message] < 30000
+            # blocked!
+            console.log "[echo] attempted to repost message before time expired: BLOCKED"
+          else
+            new SpeakOnce (room) -> room.speak(message, logger)
+            spoken_messages[message] = date
 
           response.end ''
 
