@@ -1,7 +1,7 @@
 util       = require('util')
 curl       = require('../vendor/simple_http').curl
-{Campfire} = require '../vendor/campfire' 
-{_}        = require 'underscore'
+SpeakOnce  = require('../vendor/speak_once').SpeakOnce
+_          = require('underscore')._
 qs         = require('querystring')
 
 # JSON message from github's post-url service
@@ -120,44 +120,30 @@ module.exports =
 
           console.log "[github] parsed commit #{ commit.repository.url }/commit/#{after_token}"
 
+          # get release name
           (new AdjectiveNoun).get after_token, (release_name) ->
-            # connect to github reporting room
-            campfire  = new Campfire
-              ssl: true
-              token: process.env.campfire_bot_token
-              account: process.env.campfire_bot_account
-            campfire.room process.env.campfire_bot_room, (room) ->
-              try 
+            new SpeakOnce (room) ->
+              try
                 if qty == 1
                   # a single commit
                   c = commit.commits[0]
-                  room.speak "[#{ project }/#{ branch }] #{ c.message } - #{ c.author.name } (#{ link_to_commit(after) }) \n\ncurrent release #{ after_token }: \"#{release_name}\"", 
+                  room.speak "[#{ project }/#{ branch }] #{ c.message } - #{ c.author.name } (#{ link_to_commit(after) }) \n\ncurrent release #{ after_token }: \"#{release_name}\"",
                     logger
                 else if qty > 1
                   # a list of commits
                   compare_url = commit.compare # "#{ commit.repository.url }/compare/#{ before_token }...#{ after_token }"
                   room.speak "[#{ project }] #{ commit.pusher.name } pushed #{qty} commits to #{ branch }: #{ compare_url }"
                   commit.commits.forEach (c) ->
-                    room.speak "[#{ project }/#{ branch }] #{ c.message } - #{ c.author.name }", 
+                    room.speak "[#{ project }/#{ branch }] #{ c.message } - #{ c.author.name }",
                       logger
                   room.speak "[#{project}/#{ branch }] current release #{ after_token }: \"#{release_name}\""
-
               catch ex
                 console.log "error trying to post github commit: #{ ex.message }"
-
           response.end ''
         catch ex
           console.log "[github] ERROR: #{ ex.message }"
-
           response.end ex.message
-
         return true
-
-        # json
-        # response.writeHead 200, {'Content-Type': 'application/json'}
-
-        # # output
-        # response.end JSON.stringify(data: commit, a: 1, b: 2, c: 3)
       return true
 
   listen: (message, room, logger) ->
