@@ -24,7 +24,10 @@ class PluginNotifier
 
   notify: (message, room) ->
     for plugin in @plugins
-      plugin.listen(message, room, logger)
+      try
+        plugin.listen(message, room, logger)
+      catch ex
+        console.error "ERROR BUG FIXME: #{ ex.message }"
 
 fs.readdirSync(__dirname).forEach (file) ->
   return if /^\./.test(file)
