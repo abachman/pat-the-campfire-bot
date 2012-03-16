@@ -12,3 +12,5 @@ google.search('balloon animal', function (results) {
   phrase = results[0].titleNoFormatting + " - " + results[0].unescapedUrl;
   console.log(phrase);
 });
+
+

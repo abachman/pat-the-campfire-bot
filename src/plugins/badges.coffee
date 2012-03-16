@@ -143,9 +143,9 @@ the_phrase_list = [
 module.exports =
   name: "Merit Badger"
   listen: (message, room, logger) ->
-    body = message.body
+    body = message.body || ''
 
-    if (/pat/i.test(body) && (/badge me/i.test(body) || /merit badge/i.test(body))) || /^badge me$/i.test(body.trim())
+    if (/pat/i.test(body) && (/badge me/i.test(body) || /merit badge/i.test(body))) || /^badge me$/i.test(body)
       console.log "finding a merit badge"
 
       a_badge  = the_badge_list[  Math.floor(Math.random() * the_badge_list.length) ]

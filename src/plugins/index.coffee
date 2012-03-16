@@ -16,6 +16,7 @@ logger = (d) ->
 
 class PluginNotifier
   constructor: (@plugins, @services) ->
+
   http_notify: (request, response) ->
     for service in @services
       # break if something responds
