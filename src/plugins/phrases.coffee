@@ -116,7 +116,7 @@ class Phrases
       if _existing.choice
         unless _existing.msg.forEach
           # existing is choice, but hasn't yet been converted into array. how is this possible?
-          try 
+          try
             _existing.msg = JSON.parse(_existing.msg)
           catch ex
             console.log "error in parsing _existing.msg: #{ ex.message }"
@@ -127,12 +127,11 @@ class Phrases
         if phr.choice || typeof(phr.msg) == 'Array'
           # ensure array-ness
           unless typeof(phr.msg) is "Array"
-            try 
+            try
               phr.msg = JSON.parse(phr.msg)
             catch ex
               console.log "error in parsing phr.msg: #{ ex.message }"
               phr.msg = [phr.msg]
-            phr.msg = JSON.parse(phr.msg)
 
           console.log "Loaded message is an Array"
           _.each phr.msg, (m) -> _existing.msg.push(m)
@@ -156,7 +155,7 @@ class Phrases
 
   remove_phrase_from_cache: (phr) ->
     _before = @phrases.length
-    @phrases = _.reject @phrases, (p) -> 
+    @phrases = _.reject @phrases, (p) ->
       p.regex.toString() == phr.regex.toString()
     _after = @phrases.length
 

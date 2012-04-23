@@ -29,7 +29,7 @@ http://iheartquotes.com/api
 "
 
 module.exports =
-  name: "Anagrammit"
+  name: "Quotes"
   listen: (message, room, logger) ->
     body = message.body
 

@@ -1,7 +1,7 @@
 util       = require('util')
 curl       = require('../vendor/simple_http').curl
 SpeakOnce  = require('../vendor/speak_once').SpeakOnce
-_          = require('underscore')._
+{_}        = require('underscore')
 qs         = require('querystring')
 
 # JSON message from github's post-url service
