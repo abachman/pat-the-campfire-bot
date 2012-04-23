@@ -276,21 +276,23 @@ class Phrases
       if _.isArray( phrase.msg )
         if phrase.choice
           choose = Math.floor(Math.random() * phrase.msg.length)
-          room.speak phrase.msg[choose], @logger
+          room.speak_or_play phrase.msg[choose], @logger
         else
           phrase.msg.forEach (msg) =>
-            room.speak msg, @logger
-      else if _.isFunction(phrase.msg)
+            room.speak_or_play msg, @logger
+
+      if _.isFunction(phrase.msg)
         match = message.body.match(phrase.regex)[1]
         # find the user who spoke and pass them along
         User.findOne {user_id: message.user_id}, (err, user) =>
           if user
-            room.speak phrase.msg({match: match, user: user}), @logger
+            room.speak_or_play phrase.msg({match: match, user: user}), @logger
           else
-            room.speak phrase.msg({match: match, user: {}}), @logger
+            room.speak_or_play phrase.msg({match: match, user: {}}), @logger
       else
         console.log "speaking the bare phrase: #{ phrase.msg }"
-        room.speak phrase.msg, @logger
+        room.speak_or_play phrase.msg, room
+
       phrase.callback() if _.isFunction( phrase.callback )
 
   listen: (message, room) ->
