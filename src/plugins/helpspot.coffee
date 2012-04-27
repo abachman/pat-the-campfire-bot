@@ -112,12 +112,8 @@ class Helpspot
     @api.get_request request_id, (results) =>
       if results && results.xRequest == request_id
         console.log "I got results from Helpspot, speaking..."
-        link = @room_link_template.replace('$', request_id) + "\n" +
-          "[#{results.xCategory}] #{results.sTitle}\n" +
-          "from: #{ results.fullname }\n" +
-          "assd: #{ results.xPersonAssignedTo.split(' ')[0] }"
-
-        room.paste "#{ link }", logger
+        link = "[#{results.xCategory}] #{results.sTitle} \n" + @room_link_template.replace('$', request_id)
+        room.speak "#{ link }", logger
 
   ticket_status: (message, room) ->
     request_id = @room_id_matcher.exec(message)[2]
