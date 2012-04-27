@@ -7,7 +7,7 @@ querystring = require 'querystring'
 DomJS = require('dom-js').DomJS
 find_child_by_name = (_dom, name) ->
   if name == _dom.name
-    return _dom 
+    return _dom
   else if _dom.children && _dom.children.length > 0
     for child in _dom.children
       result = find_child_by_name(child, name)
@@ -44,8 +44,8 @@ logger = ( d ) ->
 #   Custom2: '',
 #   fullname: 'M. Robotic',
 #   reportingTags: { tag: [ [Object], [Object] ] },
-#   request_history: 
-#    { item: 
+#   request_history:
+#    { item:
 #       { '70000': [Object],
 #         '70001': [Object],
 #         '70002': [Object],
@@ -57,14 +57,14 @@ class HelpspotAPI
   get_request: (request_id, callback) ->
     api_client = http.createClient 80, @config.helpspot_hostname
 
-    query = querystring.stringify 
+    query = querystring.stringify
       method: 'private.request.get'
       xRequest: request_id
       output: 'json'
       username: @config.helpspot_username
       password: @config.helpspot_password
 
-    options = 
+    options =
       method: 'GET'
       path  : @config.helpspot_path + "/api/index.php?" + query
 
@@ -86,7 +86,7 @@ class HelpspotAPI
 
       response.on 'close', () ->
         console.log "GOT close EVENT ON HELPSPOT API!"
-        try 
+        try
           results = JSON.parse data
           callback results
         catch e
@@ -110,13 +110,15 @@ class Helpspot
   link_to_ticket: (message, room) ->
     request_id = @room_id_matcher.exec(message)[2]
     @api.get_request request_id, (results) =>
-      console.log "I'm back with the results"
-      console.dir results
       if results && results.xRequest == request_id
-        console.log "speaking!"
-        link = @room_link_template.replace('$', request_id)
-        room.speak "#{ link }", logger
-  
+        console.log "I got results from Helpspot, speaking..."
+        link = @room_link_template.replace('$', request_id) + "\n" +
+          "[#{results.xCategory}] #{results.sTitle}\n" +
+          "from: #{ results.fullname }\n" +
+          "assd: #{ results.xPersonAssignedTo.split(' ')[0] }"
+
+        room.paste "#{ link }", logger
+
   ticket_status: (message, room) ->
     request_id = @room_id_matcher.exec(message)[2]
     @api.get_request request_id, (request) =>
@@ -137,9 +139,15 @@ class Helpspot
 
   listen: (msg, room, env) ->
     body = msg.body
+
+    return unless @api.config.helpspot_hostname? and
+      @api.config.helpspot_path? and
+      @api.config.helpspot_username? and
+      @api.config.helpspot_password?
+
     if @room_id_matcher.test(body)
       # message has a request...
-      
+
       # status update?
       if /pat/i.test(body) && /status/i.test(body)
         console.log "getting helpspot status: #{ @room_id_matcher.exec(msg.body)[2] }"
