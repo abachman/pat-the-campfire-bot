@@ -1,24 +1,8 @@
 util       = require('util')
-curl       = require('../vendor/simple_http').curl
+{curl, getClientIp} = require('../vendor/simple_http')
 SpeakOnce  = require('../vendor/speak_once').SpeakOnce
 {_}        = require('underscore')
 qs         = require('querystring')
-
-getClientIp = (request) ->
-  # the request may be forwarded from local web server.
-  forwardedIpsStr = request.headers['x-forwarded-for']
-  if forwardedIpsStr
-    # 'x-forwarded-for' header may return multiple IP addresses in
-    # the format: "client IP, proxy 1 IP, proxy 2 IP" so take the
-    # the first one
-    forwardedIps = forwardedIpsStr.split(',')
-    ipAddress = forwardedIps[0]
-
-  if not ipAddress
-    # If request was not forwarded
-    ipAddress = request.connection.remoteAddress
-
-  ipAddress
 
 IS_LISTENING = false
 
