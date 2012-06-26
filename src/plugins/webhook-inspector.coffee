@@ -20,18 +20,21 @@ getClientIp = (request) ->
 
   ipAddress
 
+IS_LISTENING = false
+
 module.exports =
   name: "Webhook Inspector"
 
   http_listen: (request, response, logger) ->
     if /\/webhook-inspector/i.test request.url
-      console.log "/webhook-inspector got a #{request.method} message!"
-      console.log util.inspect(request)
-
       clientIp = getClientIp request
 
+      console.log "/webhook-inspector got a #{request.method} message from #{ clientIp }"
+
       response.writeHead 200, {'Content-Type': 'text/html'}
-      response.end "okay #{ clientIp }"
+      response.end if IS_LISTENING then "okay #{ clientIp }" else "la la la, I'm not listening"
+
+      return unless IS_LISTENING
 
       data = ""
 
@@ -48,5 +51,19 @@ module.exports =
       # response.writeHead 200, {'Content-Type': 'text/plain'}
       # response.end ''
 
-  listen: () ->
+  listen: (message, room, logger) ->
+    body = message.body
+
+    mah_name = /pat/i
+    matcher = /(start|stop) inspecting webhooks/i
+
+    if mah_name.test(body) and matcher.test(body)
+      state = matcher.exec(body)[1]
+
+      if /start/i.test state
+        room.speak "I'm inspecting webhooks #{ if IS_LISTENING then 'already' else 'now' }."
+        IS_LISTENING = true
+      else
+        room.speak "I've stopped inspecting webhooks #{ if !IS_LISTENING then 'already' else 'now' }."
+        IS_LISTENING = false
 
