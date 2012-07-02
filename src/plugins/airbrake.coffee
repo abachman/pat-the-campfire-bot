@@ -3,6 +3,30 @@ util       = require('util')
 SpeakOnce  = require('../vendor/speak_once').SpeakOnce
 {_}        = require('underscore')
 
+# An airbrake.io webhook message looks like this:
+#
+# { error:
+#   { id: 51361566,
+#     error_message: 'RuntimeError: I\'ve made a huge mistake',
+#     error_class: 'RuntimeError',
+#     file: '/testapp/app/models/user.rb',
+#     line_number: 53,
+#     project: { id: 20411, name: 'some-random-app' },
+#     last_notice:
+#      { id: 6283101553,
+#        request_method: null,
+#        request_url: 'http://example.com',
+#        backtrace: [] },
+#     environment: 'production',
+#     first_occurred_at: '2012-06-26T19:55:19Z',
+#     last_occurred_at: '2012-06-26T19:55:19Z',
+#     times_occurred: 1 } }
+#
+# airbrake messages will be posted to the campfire_airbrake_room if
+# defined in the process.env.
+
+airbrake_room_id = process.env.campfire_airbrake_room || process.env.campfire_bot_room
+
 module.exports =
   name: "Airbrake Webhook"
 
@@ -29,22 +53,6 @@ module.exports =
           return false
 
         try
-          # { error:
-          #   { id: 51361566,
-          #     error_message: 'RuntimeError: I\'ve made a huge mistake',
-          #     error_class: 'RuntimeError',
-          #     file: '/testapp/app/models/user.rb',
-          #     line_number: 53,
-          #     project: { id: 20411, name: 'tixatobeta' },
-          #     last_notice:
-          #      { id: 6283101553,
-          #        request_method: null,
-          #        request_url: 'http://example.com',
-          #        backtrace: [] },
-          #     environment: 'production',
-          #     first_occurred_at: '2012-06-26T19:55:19Z',
-          #     last_occurred_at: '2012-06-26T19:55:19Z',
-          #     times_occurred: 1 } }
           console.log util.inspect(incoming)
           error = incoming.error
           error_message = "
@@ -58,7 +66,7 @@ module.exports =
           "
           error_message = error_message.replace /^[ \t]+/gm, ''
 
-          new SpeakOnce (room) ->
+          new SpeakOnce airbrake_room_id, (room) ->
             if data.length > 0
               room.speak "[#{error.project.name}] Airbrake is reporting an error!"
               _.delay (-> room.paste error_message), 500
