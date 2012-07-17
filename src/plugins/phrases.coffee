@@ -45,6 +45,7 @@ phrases.push
 
 class Phrases
   name: "Phrases"
+  IS_NOISY: true
 
   constructor: (static_phrases) ->
     @static_phrases = static_phrases
@@ -171,6 +172,7 @@ class Phrases
   tell_all: (room) ->
     room.speak "I know #{ @phrases.length } phrases: #{ @all_phrases() }.", @logger
     room.speak "Say `pat /pattern/ \"phrase\"` to help me remember and `pat forget /pattern/` or `pat -/pattern/` to let me forget.", @logger
+    room.speak "Say `pat be quiet` to make me shut up and `pat be noisy` to make me respond again.", @logger
 
   get_isolated_pattern: (pattern) ->
     _leading  = /^\//
@@ -296,6 +298,7 @@ class Phrases
       phrase.callback() if _.isFunction( phrase.callback )
 
   listen: (message, room) ->
+
     body = message.body
 
     # adder
@@ -308,8 +311,17 @@ class Phrases
         console.log "remove a phrase"
         @remove_phrase @re_matcher.exec(body)[1], room
         return true
+      else if (/be quiet/i.test(body) or /shut up/i.test(body)) and this.IS_NOISY
+        room.speak "sorry, I'll be quiet", @logger
+        this.IS_NOISY = false
+        return
+      else if /be noisy/.test(body) and not this.IS_NOISY
+        room.speak "I'll be noisy again!", @logger
+        this.IS_NOISY = true
+        return
 
-    @match_phrase(message, room)
+    if this.IS_NOISY
+      @match_phrase(message, room)
 
 module.exports = new Phrases(phrases)
 
