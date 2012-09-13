@@ -77,7 +77,7 @@ class HelpspotAPI
         data += chunk
 
       response.on 'end', () ->
-        console.log "GOT end EVENT ON HELPSPOT API!"
+        console.log "GOT end EVENT ON HELPSPOT API with data #{ data }!"
         try
           results = JSON.parse data
           callback results
@@ -111,7 +111,6 @@ class Helpspot
     request_id = @room_id_matcher.exec(message)[2]
     @api.get_request request_id, (results) =>
       if results && results.xRequest == request_id
-        console.log "I got results from Helpspot, speaking..."
         link = "[#{results.xCategory}] #{results.sTitle} \n" + @room_link_template.replace('$', request_id)
         room.speak "#{ link }", logger
 
