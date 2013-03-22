@@ -3,7 +3,7 @@
   "version":"0.0.1",
   "dependencies": {
     "underscore": "1.1.7"
-  , "node": "0.8.x"
+  , "node": "0.8.8"
   , "dom-js": "0.0.1"
   , "mongoose": "1.7.3"
   , "pegjs": "0.6.2"
