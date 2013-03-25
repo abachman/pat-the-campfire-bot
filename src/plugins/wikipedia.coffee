@@ -13,14 +13,25 @@ module.exports =
   listen: (message, room, logger) ->
     body = message.body
 
-    if /pat/i.test(body) && /look up:/i.test(body)
-      phrase = body.match(/: (.*)$/)
+    patterns = [
+      /look up(:)? (.+)$/i
+      /what is( a| an)? ([^?]+)\??$/i
+    ]
 
-      unless phrase && phrase[1].length
+    if /^pat/i.test(body) && _.any(patterns, (pattern) -> pattern.test(body))
+      pattern = _.find(patterns, (pattern) -> pattern.test(body))
+      phrase  = body.match(pattern)
+
+      unless phrase && phrase[2].length
         room.speak "I can't tell what you want me to look up :(", logger
         return
 
-      phrase = phrase[1]
+      phrase = phrase[2]
+
+      quoted = /"([^"]+)"/
+
+      if quoted.test(phrase)
+        phrase = phrase.match(quoted)[1]
 
       console.log "looking up \"#{ phrase }\" on wikipedia"
 
@@ -69,21 +80,11 @@ module.exports =
             if content.extract?
               room.speak content.extract, logger
               wikiUrl = "http://#{wikipedia_host}/wiki/#{qs.escape(content.title.replace(' ','_'))}"
-              room.speak wikiUrl
-
-            if content.invalid?
-              throw "Wikipedia didn't know how to handle that one :("
-
-          # _forms.forEach (form) ->
-          #   if results[form].syn.length
-          #     out += form_template({form: form, results: results[form].syn.join(", ")})
-          #     out += "\n\n"
-
-          # if out.length
-          #   room.speak "\"#{ phrase }\""
-          #   room.paste out, logger
-          # else
-          #   room.speak "I didn't get any results for #{ phrase }"
+              room.speak wikiUrl, logger
+            else if content.invalid?
+              room.speak "Wikipedia didn't know how to handle that one :(", logger
+            else if content.missing?
+              room.speak "I checked Wikipedia but couldn't find anything, sorry.", logger
 
         catch e
           room.speak "there was a problem :( \"#{ e.message }\"", logger
