@@ -100,20 +100,21 @@ module.exports =
         commit = null
         try
           commit = JSON.parse payload
-        catch e
+        catch ex
           console.log "[github] error parsing commit data, bailing. :("
-          console.log "[github] #{ e.message }"
+          console.log "[github] #{ ex.message }"
+          response.end ex.message
           return false
 
         try
-          hash_token = /^(.{7})/
-          before  = commit.before
+          hash_token   = /^(.{7})/
+          before       = commit.before
           before_token = hash_token.exec(before)[1]
-          after   = commit.after
-          after_token = hash_token.exec(after)[1]
-          qty = commit.commits.length
-          project = commit.repository.name
-          branch  = /\/([^/]*)$/.exec(commit.ref)[1]
+          after        = commit.after
+          after_token  = hash_token.exec(after)[1]
+          qty          = commit.commits.length
+          project      = commit.repository.name
+          branch       = if /\//.test(commit.ref) then /\/([^/]*)$/.exec(commit.ref)[1] else commit.ref
 
           link_to_commit = (hash) ->
             commit.repository.url + "/commit/#{ hash }"
@@ -142,6 +143,7 @@ module.exports =
           response.end ''
         catch ex
           console.log "[github] ERROR: #{ ex.message }"
+          console.log ex.stack
           response.end ex.message
         return true
       return true
