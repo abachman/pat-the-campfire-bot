@@ -1,0 +1,103 @@
+#!/bin/sh
+
+## Github style post-receive hook.
+## taken from: https://github.com/mbmccormick/gitosis-webhook
+
+# webhook post_url: this URL is hit with a POST request when you push, it
+# should be pointed at a running instance of Pat the Campfire Bot and the
+# /commit path. For example:
+post_url="http://localhost:5100/commit"
+
+## SCRIPT VARIABLES
+## information unique to this repo
+
+repo_url="ssh://somewhere-that-isnt-github.com"
+commit_url="http://probably-is-not-one.com"
+repo_name="your_repo_name"
+repo_owner_name="Repo Owner"
+repo_owner_email="owner@repository.com"
+repo_desc="An example of a project description."
+
+## END SCRIPT VARIABLES
+
+read oldrev newrev refname
+
+# HOOK_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# HOOK_LOG=$HOOK_DIR/debug.log
+# timestamp=$(date +'%Y-%m-%d %H:%M:%S')
+# echo "[$timestamp] receiving commit, telling Pat about it" >> HOOK_LOG
+
+refname=${refname##refs/heads/}
+
+gitver=$(git --version)
+gitver=${gitver##* }
+
+rev=$(git describe ${newrev} 2>/dev/null)
+[[ -z ${rev} ]] && rev=${newrev:0:12}
+
+rawcommit=$(git cat-file commit ${newrev})
+
+author=$(sed -n -e '/^author \([^<]*\).*$/s--\1-p' \
+  <<< "${rawcommit}")
+author=$(echo ${author} | sed -e 's/[ ]*$//')
+
+email=$(sed -n -e '/^author .*<\([^>]*\).*$/s--\1-p' \
+  <<< "${rawcommit}")
+
+logmessage=$(sed -e '1,/^$/d;s/\"/\\\"/g' <<< "${rawcommit}")
+logmessage=${logmessage//&/&amp;}
+logmessage=${logmessage//</&lt;}
+logmessage=${logmessage//>/&gt;}
+logmessage=${logmessage//>/&gt;}
+
+
+ts=$(sed -n -e '/^author .*> \([0-9]\+\).*$/s--\1-p' \
+  <<< "${rawcommit}")
+
+# assume author is also pusher, not always a safe assumption but git offers no alternative
+out="
+{
+  \"pusher\": {
+    \"email\": \"${email}\",
+    \"name\": \"${author}\"
+  },
+  \"after\": \"${newrev}\",
+  \"before\": \"${oldrev}\",
+  \"commits\": [
+    {
+      \"added\": [
+$(git diff-tree -r --name-only --diff-filter=A ${newrev} | sed -e '1d' -e 's-.*-        \"&\",-' | sed -e '$s/,//')
+      ],
+      \"author\": {
+        \"email\": \"${email}\",
+        \"name\": \"${author}\"
+      },
+      \"id\": \"${rev}\",
+      \"message\": \"${logmessage}\",
+      \"modified\": [
+$(git diff-tree -r --name-only --diff-filter=M ${newrev} | sed -e '1d' -e 's-.*-        \"&\",-' | sed -e '$s/,//')
+      ],
+      \"removed\": [
+$(git diff-tree -r --name-only --diff-filter=D ${newrev} | sed -e '1d' -e 's-.*-        \"&\",-' | sed -e '$s/,//')
+      ],
+      \"timestamp\": \"${ts}\",
+      \"url\": \"${commit_url}${newrev}\"
+    }
+  ],
+  \"ref\": \"${refname}\",
+  \"repository\":
+  {
+    \"url\": \"${repo_url}\",
+    \"name\": \"${repo_name}\",
+    \"description\": \"${repo_desc}\",
+    \"owner\":
+    {
+      \"name\": \"${repo_owner_name}\",
+      \"email\": \"${repo_owner_email}\"
+    }
+  }
+}"
+
+# echo "[$timestamp] $out" >> $HOOK_LOG
+
+wget --post-data "payload=${out}" ${post_url} --quiet -o /dev/null
