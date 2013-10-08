@@ -88,16 +88,20 @@ track_message = (msg) ->
   increment user_date_id
 
 # global heartbeat timeout id
-heartbeat = null
+heartbeats   = {}
+joined_rooms = []
 
-# enter the main room
-campfire_instance.room process.env.campfire_bot_room, (room) ->
+shut_it_down = ->
+  room.leave() for room in joined_rooms
+  setTimeout((->
+    process.exit()
+  ), 1000)
 
-  # the message emitter
-  handle_message = (message) ->
-
+room_joiner = (room) ->
   # join the main conversation room
   room.join ->
+    joined_rooms.push(room) unless joined_rooms.indexOf(room) >= 0
+
     console.info "bot with id #{ bot.id } is joining #{room.name}"
 
     # who do I know?
@@ -135,27 +139,34 @@ campfire_instance.room process.env.campfire_bot_room, (room) ->
     room.events.on 'listen:disconnect', () ->
       # start listening again
       console.log "lost connection to Campfire, killing process"
-      process.exit(1)
-      # room_event_loop()
+      shut_it_down()
 
     # clear before setting in case room.join is being called again
-    if heartbeat
-      debuglog "clearing heartbeat timeout"
-      clearTimeout heartbeat
+
+    if heartbeats[room.id]?
+      debuglog "clearing heartbeat timeout for #{ room.id }"
+      clearTimeout heartbeats[room.id]
 
     # ping to prevent connection loss
     ping_room = () ->
       room.ping ->
-        console.log('heartbeat')
+        console.log("heartbeat for #{ room.id }")
       # every 8 minutes
       setTimeout ping_room, (60000 * 8)
-    heartbeat = ping_room()
+    heartbeats[room.id] = ping_room()
 
-  # leave the room on exit
-  process.on 'SIGINT', ->
-    room.leave ->
-      console.log '\nGood Luck, Star Fox'
-      process.exit()
+# enter the main room
+room_list = process.env.campfire_bot_room.split(',')
+
+for bot_room in room_list
+  campfire_instance.room(bot_room, (room) ->
+    console.log "joining room", room.id, room.name
+    room_joiner(room)
+  )
+
+# leave the room on exit
+process.on 'SIGINT', ->
+  shut_it_down()
 
 # heroku wants the app to bind to a port, so let's do that. We also might as
 # well listen to http requests.

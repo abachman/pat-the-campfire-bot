@@ -79,6 +79,7 @@ I start working. This lets me keep private stuff out of the code. It looks like 
     export campfire_bot_token=12345thisisthetokencampfiregavemeweirdhuh
     export campfire_bot_account=zoomakroom
     export campfire_bot_room=100000     # staging
+    export campfire_service_room=100000 # staging
     # export campfire_bot_room=900000   # production
     export campfire_logging_room=100000 # bot chatter
     export PATH=$(npm bin):$PATH
@@ -86,7 +87,9 @@ I start working. This lets me keep private stuff out of the code. It looks like 
 I think that last PATH=$(npm bin):$PATH line is what keeps me, node, foreman,
 and npm happy in my local dev environment.
 
-Wherever you deploy, you'll need those four `campfire_*` environment variables.
+Wherever you deploy, you'll need those five `campfire_*` environment variables.
+
+**NOTE:** `campfire_bot_room` can be a comma separated string, Pat can listen to multiple rooms now!
 
 ### running the app
 

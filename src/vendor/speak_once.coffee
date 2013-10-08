@@ -5,7 +5,7 @@
 class SpeakOnce
   constructor: (args...) ->
     if _.isFunction(args[0])
-      room_id = process.env.campfire_bot_room
+      room_id = process.env.campfire_service_room
       callback = args[0]
     else
       room_id = args[0]

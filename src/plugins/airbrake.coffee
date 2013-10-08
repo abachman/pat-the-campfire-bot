@@ -25,7 +25,7 @@ SpeakOnce  = require('../vendor/speak_once').SpeakOnce
 # airbrake messages will be posted to the campfire_airbrake_room if
 # defined in the process.env.
 
-airbrake_room_id = process.env.campfire_airbrake_room || process.env.campfire_bot_room
+airbrake_room_id = process.env.campfire_airbrake_room || process.env.campfire_service_room
 
 module.exports =
   name: "Airbrake Webhook"
