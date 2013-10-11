@@ -22,6 +22,7 @@ module.exports =
           console.log "[echo] recieved POST #{ data }"
           full_data = qs.parse(data)
           message = full_data.message
+          room_number = if full_data.room? then full_data.room else null
           console.log "[echo] recieved data (#{typeof full_data}): #{ util.inspect(full_data) }"
           console.log "[echo] recieved message (#{typeof message}): #{ message }"
 
@@ -35,7 +36,11 @@ module.exports =
             # blocked!
             console.log "[echo] attempted to repost message before time expired: BLOCKED"
           else
-            new SpeakOnce (room) -> room.speak(message, logger)
+            speak_callback = (room) -> room.speak(message, logger)
+            if room_number?
+              new SpeakOnce(room_number, speak_callback)
+            else
+              new SpeakOnce(speak_callback)
             spoken_messages[message] = date
 
           response.end ''
