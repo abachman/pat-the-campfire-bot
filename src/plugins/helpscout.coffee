@@ -182,7 +182,7 @@ class HelpScoutAPI
 class HelpScout
   name: "HelpScout"
 
-  room_number_matcher: /(^|[^a-zA-Z0-9])\/(\d+)($|[^a-zA-Z0-9])/ # try to avoid matching git hashes, etc
+  room_number_matcher: /(^|[^a-zA-Z0-9])[\/#](\d+)($|[^a-zA-Z0-9])/ # try to avoid matching git hashes, etc
 
   # link directly to a support request
   link_message: _.template("
