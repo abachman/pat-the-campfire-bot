@@ -6,7 +6,7 @@ qs   = require('querystring')
 # if you're using anagrammit, make sure you add the same api token to both heroku envs
 anagrammit_token = process.env.ANAGRAMMIT_API_TOKEN || 'dev'
 anagrammit_host = process.env.ANAGRAMMIT_HOST || 'localhost'
-anagrammit_port = process.env.ANAGRAMMIT_PORT || 3000
+anagrammit_port = process.env.ANAGRAMMIT_PORT || 3100
 
 module.exports =
   name: "Anagrammit"
