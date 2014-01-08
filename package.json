@@ -2,7 +2,7 @@
   "name":"f53-campfire-bot",
   "version":"0.0.1",
   "engines": {
-    "node": "0.8.*"
+    "node": "0.10.*"
   , "npm": "1.1.*"
   },
   "scripts": {
