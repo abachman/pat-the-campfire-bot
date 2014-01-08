@@ -11,7 +11,7 @@
   "dependencies": {
     "underscore": "1.1.7"
   , "dom-js": "0.0.1"
-  , "mongoose": "1.7.3"
+  , "mongoose": "3.8.4"
   , "pegjs": "0.6.2"
   , "jasmine-node": "1.0.10"
   }
