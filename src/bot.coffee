@@ -60,7 +60,7 @@ find_or_create_user = (user_id, channel) ->
         user.save (err, record) ->
           if err
             console.error "ERROR: #{ err.message }"
-            throw err
+            # throw err
           else
             debuglog "tagged user, #{ record.user_id }!"
             channel.emit 'ready'
@@ -159,9 +159,11 @@ room_joiner = (room) ->
 room_list = process.env.campfire_bot_room.split(',')
 
 for bot_room in room_list
+  console.log "attempting to join room #{ room }"
   campfire_instance.room(bot_room, (room) ->
-    console.log "joining room", room.id, room.name
-    room_joiner(room)
+    if room?
+      console.log "joining room", room.id, room.name
+      room_joiner(room)
   )
 
 # leave the room on exit
