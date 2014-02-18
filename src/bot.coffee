@@ -159,7 +159,7 @@ room_joiner = (room) ->
 room_list = process.env.campfire_bot_room.split(',')
 
 for bot_room in room_list
-  console.log "attempting to join room #{ room }"
+  console.log "attempting to join room #{ bot_room }"
   campfire_instance.room(bot_room, (room) ->
     if room?
       console.log "joining room", room.id, room.name
