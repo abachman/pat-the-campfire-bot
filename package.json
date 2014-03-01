@@ -9,7 +9,7 @@
     "build": "coffee -c -o ./lib ./src"
   },
   "dependencies": {
-    "underscore": "1.1.7"
+    "underscore": "1.5.0"
   , "dom-js": "0.0.1"
   , "mongoose": "3.8.4"
   , "pegjs": "0.6.2"
