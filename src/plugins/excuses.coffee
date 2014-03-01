@@ -90,7 +90,7 @@ module.exports =
   listen: (message, room, logger) ->
     body = message.body
 
-    if /pat/i.test(body) and /an excuse/i.test(body)
+    if /pat/i.test(body) and (/an excuse/i.test(body) or /the excuse/i.test(body) or /my excuse/i.test(body) or /our excuse/i.test(body) or /some excuse/i.test(body))
       console.log "generating excuse"
       room.speak (new Excuse).generate(), logger
 
