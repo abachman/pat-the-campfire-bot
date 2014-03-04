@@ -170,6 +170,10 @@ for bot_room in room_list
 process.on 'SIGINT', ->
   shut_it_down()
 
+process.on 'uncaughtException', (err) ->
+  console.error(err.stack)
+  shut_it_down()
+
 # heroku wants the app to bind to a port, so let's do that. We also might as
 # well listen to http requests.
 server = http.createServer (req, res) ->
@@ -181,4 +185,5 @@ server = http.createServer (req, res) ->
 
 port = process.env.PORT || 5000
 
-server.listen port, () -> console.log("listening on port #{ port }")
+server.listen port, ->
+  console.log("listening on port #{ port }")
