@@ -88,7 +88,7 @@ module.exports =
       data = ""
 
       request.on 'data', (incoming) ->
-       data += incoming
+        data += incoming
 
       request.on 'end', ->
         payload = qs.parse(data).payload

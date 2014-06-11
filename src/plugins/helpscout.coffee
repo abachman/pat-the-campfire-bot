@@ -136,6 +136,7 @@ class HelpScoutAPI
 
   get: (options, callback) ->
     # make the request
+
     request = https.request options, (response) ->
       data = ''
 
