@@ -181,7 +181,7 @@ server = http.createServer (req, res) ->
 
   unless plugins.http_notify(req, res)
     res.writeHead 200, { 'Content-Type': 'text/html' }
-    res.end "<pre>#{ bot.name || 'bot' } &lt;3s you</pre>"
+    res.end "<pre>bot &lt;3s you</pre>"
 
 port = process.env.PORT || 5000
 
